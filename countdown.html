@@ -1,0 +1,510 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>下班倒计时</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --bg-top: #fff7e8;
+      --bg-bottom: #ffe0b5;
+      --card: rgba(255, 250, 242, 0.88);
+      --text: #2d2118;
+      --muted: #775f4b;
+      --accent: #d66a2a;
+      --accent-soft: rgba(214, 106, 42, 0.12);
+      --shadow: 0 24px 60px rgba(126, 79, 36, 0.18);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      display: grid;
+      place-items: center;
+      font-family: "Microsoft YaHei", "PingFang SC", sans-serif;
+      background:
+        radial-gradient(circle at top left, rgba(255, 255, 255, 0.8), transparent 32%),
+        linear-gradient(160deg, var(--bg-top), var(--bg-bottom));
+      color: var(--text);
+    }
+
+    .card {
+      width: min(92vw, 720px);
+      padding: 40px 28px;
+      border-radius: 28px;
+      background: var(--card);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(12px);
+      text-align: center;
+    }
+
+    .eyebrow {
+      margin: 0;
+      font-size: 16px;
+      letter-spacing: 0.08em;
+      color: var(--muted);
+    }
+
+    .weekday {
+      margin: 0 auto 16px;
+      display: inline-block;
+      padding: 10px 18px;
+      border-radius: 999px;
+      background: rgba(214, 106, 42, 0.14);
+      box-shadow: inset 0 0 0 1px rgba(214, 106, 42, 0.16);
+      font-size: 24px;
+      font-weight: 800;
+      letter-spacing: 0.04em;
+      color: var(--accent);
+    }
+
+    .date-label {
+      margin: 0 auto 14px;
+      display: inline-block;
+      padding: 8px 16px;
+      border-radius: 999px;
+      background: rgba(45, 33, 24, 0.06);
+      box-shadow: inset 0 0 0 1px rgba(45, 33, 24, 0.08);
+      font-size: 22px;
+      font-weight: 800;
+      letter-spacing: 0.04em;
+      color: var(--text);
+    }
+
+    .year-progress {
+      margin: 0 auto 20px;
+      max-width: 420px;
+      text-align: center;
+    }
+
+    .year-progress-text {
+      margin: 0 0 10px;
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--text);
+    }
+
+    .year-progress-track {
+      width: 100%;
+      height: 10px;
+      border-radius: 999px;
+      overflow: hidden;
+      background: rgba(45, 33, 24, 0.1);
+      box-shadow: inset 0 0 0 1px rgba(45, 33, 24, 0.05);
+    }
+
+    .year-progress-fill {
+      width: 0;
+      height: 100%;
+      border-radius: 999px;
+      background: linear-gradient(90deg, #f0a16d, var(--accent));
+      transition: width 0.3s ease;
+    }
+
+    .clock-widget {
+      margin: 0 auto 24px;
+      width: 250px;
+      height: 250px;
+      border-radius: 50%;
+      position: relative;
+      background:
+        radial-gradient(circle at center, rgba(255, 255, 255, 0.95) 0 54%, rgba(249, 230, 209, 0.95) 55% 100%);
+      box-shadow:
+        inset 0 0 0 8px rgba(255, 255, 255, 0.85),
+        inset 0 0 0 16px rgba(214, 106, 42, 0.08),
+        0 18px 38px rgba(126, 79, 36, 0.18);
+    }
+
+    .clock-face {
+      position: absolute;
+      inset: 0;
+      border-radius: 50%;
+    }
+
+    .clock-number {
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      width: 30px;
+      height: 30px;
+      margin-left: -15px;
+      margin-top: -15px;
+      display: grid;
+      place-items: center;
+      font-size: 22px;
+      font-weight: 800;
+      color: #6e4529;
+      transform: translate(var(--number-x), var(--number-y));
+    }
+
+    .tick {
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      width: 4px;
+      height: 18px;
+      margin-left: -2px;
+      margin-top: -115px;
+      border-radius: 999px;
+      background: rgba(45, 33, 24, 0.45);
+      transform-origin: center 115px;
+    }
+
+    .tick.major {
+      height: 28px;
+      margin-top: -120px;
+      background: var(--accent);
+      transform-origin: center 120px;
+    }
+
+    .hand {
+      position: absolute;
+      left: 50%;
+      bottom: 50%;
+      transform-origin: center bottom;
+      border-radius: 999px;
+    }
+
+    .hand.hour {
+      width: 8px;
+      height: 62px;
+      margin-left: -4px;
+      background: #5a3a26;
+    }
+
+    .hand.minute {
+      width: 6px;
+      height: 88px;
+      margin-left: -3px;
+      background: #7a4a2c;
+    }
+
+    .hand.second {
+      width: 3px;
+      height: 96px;
+      margin-left: -1.5px;
+      background: #d14b38;
+    }
+
+    .clock-center {
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      width: 18px;
+      height: 18px;
+      margin-left: -9px;
+      margin-top: -9px;
+      border-radius: 50%;
+      background: var(--accent);
+      box-shadow: 0 0 0 5px rgba(255, 247, 232, 0.95);
+    }
+
+    .controls {
+      margin: 24px auto 0;
+      display: inline-flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 16px;
+      border-radius: 16px;
+      background: rgba(255, 255, 255, 0.56);
+    }
+
+    .controls label {
+      font-size: 15px;
+      color: var(--muted);
+    }
+
+    .controls input {
+      width: 96px;
+      padding: 10px 12px;
+      border: 1px solid rgba(119, 95, 75, 0.25);
+      border-radius: 12px;
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--text);
+      background: rgba(255, 255, 255, 0.95);
+    }
+
+    .controls input:focus {
+      outline: 2px solid rgba(214, 106, 42, 0.25);
+      border-color: var(--accent);
+    }
+
+    .count {
+      margin: 28px 0 18px;
+      padding: 24px 18px;
+      border-radius: 22px;
+      background: var(--accent-soft);
+      font-size: clamp(34px, 7vw, 66px);
+      font-weight: 800;
+      line-height: 1.15;
+    }
+
+    .count-text {
+      white-space: nowrap;
+    }
+
+    .dots {
+      margin-top: 22px;
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 14px;
+      min-height: 34px;
+    }
+
+    .dot {
+      width: 34px;
+      height: 34px;
+      border-radius: 50%;
+      background: linear-gradient(180deg, #ef9a61, var(--accent));
+      box-shadow: 0 6px 14px rgba(214, 106, 42, 0.22);
+    }
+
+    .status {
+      margin: 28px 0 0;
+      font-size: 18px;
+      color: var(--muted);
+    }
+
+    .clock {
+      margin-top: 18px;
+      font-size: 15px;
+      color: var(--muted);
+    }
+  </style>
+</head>
+<body>
+  <main class="card">
+    <p class="date-label" id="dateLabel">今天是 2026-03-25</p>
+    <p class="weekday" id="weekdayLabel">周一</p>
+    <div class="year-progress" aria-label="今年进度">
+      <p class="year-progress-text" id="yearProgressText">今年已过去 0.00%</p>
+      <div class="year-progress-track">
+        <div class="year-progress-fill" id="yearProgressFill"></div>
+      </div>
+    </div>
+    <div class="clock-widget" aria-label="当前真实时间时钟">
+      <div class="clock-face" id="clockFace"></div>
+      <div class="hand hour" id="hourHand"></div>
+      <div class="hand minute" id="minuteHand"></div>
+      <div class="hand second" id="secondHand"></div>
+      <div class="clock-center"></div>
+    </div>
+    <div class="count">
+      <div class="count-text" id="countLabel">还剩 0 个10分钟</div>
+      <div class="dots" id="dotsContainer" aria-label="剩余份数圆点"></div>
+    </div>
+    <div class="controls">
+      <label for="unitInput">每份分钟数</label>
+      <input id="unitInput" type="number" min="1" step="1" value="10" inputmode="numeric">
+    </div>
+    <p class="status" id="statusLabel">上午按 12:00 计算，下午按 18:00 计算</p>
+    <p class="clock" id="clockLabel">当前时间：--:--:--</p>
+  </main>
+
+  <script>
+    const STORAGE_KEY = "countdown-unit-minutes";
+
+    function formatTime(date) {
+      return date.toLocaleTimeString("zh-CN", { hour12: false });
+    }
+
+    function formatWeekday(date) {
+      const weekdayNames = ["周日", "周一", "周二", "周三", "周四", "周五", "周六"];
+      return weekdayNames[date.getDay()];
+    }
+
+    function formatDate(date) {
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, "0");
+      const day = String(date.getDate()).padStart(2, "0");
+      return "今天是 " + year + "-" + month + "-" + day;
+    }
+
+    function getYearProgress(date) {
+      const yearStart = new Date(date.getFullYear(), 0, 1, 0, 0, 0, 0);
+      const nextYearStart = new Date(date.getFullYear() + 1, 0, 1, 0, 0, 0, 0);
+      const progress = ((date - yearStart) / (nextYearStart - yearStart)) * 100;
+      return Math.min(100, Math.max(0, progress));
+    }
+
+    function buildClockTicks() {
+      const clockFace = document.getElementById("clockFace");
+      if (clockFace.childElementCount > 0) {
+        return;
+      }
+
+      for (let index = 0; index < 60; index += 1) {
+        const tick = document.createElement("span");
+        tick.className = index % 5 === 0 ? "tick major" : "tick";
+        tick.style.transform = "rotate(" + (index * 6) + "deg)";
+        tick.setAttribute("aria-hidden", "true");
+        clockFace.appendChild(tick);
+      }
+
+      for (let hour = 1; hour <= 12; hour += 1) {
+        const angle = ((hour % 12) * 30 - 90) * Math.PI / 180;
+        const radius = 86;
+        const number = document.createElement("span");
+        number.className = "clock-number";
+        number.textContent = String(hour);
+        number.style.setProperty("--number-x", (Math.cos(angle) * radius) + "px");
+        number.style.setProperty("--number-y", (Math.sin(angle) * radius) + "px");
+        number.setAttribute("aria-hidden", "true");
+        clockFace.appendChild(number);
+      }
+    }
+
+    function updateClockHands(date) {
+      const hourHand = document.getElementById("hourHand");
+      const minuteHand = document.getElementById("minuteHand");
+      const secondHand = document.getElementById("secondHand");
+      const seconds = date.getSeconds();
+      const minutes = date.getMinutes();
+      const hours = date.getHours() % 12;
+      const secondAngle = seconds * 6;
+      const minuteAngle = (minutes + seconds / 60) * 6;
+      const hourAngle = (hours + minutes / 60 + seconds / 3600) * 30;
+
+      hourHand.style.transform = "rotate(" + hourAngle + "deg)";
+      minuteHand.style.transform = "rotate(" + minuteAngle + "deg)";
+      secondHand.style.transform = "rotate(" + secondAngle + "deg)";
+    }
+
+    function getDayTarget(now) {
+      const noon = new Date(now);
+      noon.setHours(12, 0, 0, 0);
+
+      const evening = new Date(now);
+      evening.setHours(18, 0, 0, 0);
+
+      if (now < noon) {
+        return {
+          label: "距离 12:00 下班",
+          target: noon,
+          detail: "上午时段，目标时间是 12:00"
+        };
+      }
+
+      if (now < evening) {
+        return {
+          label: "距离 18:00 下班",
+          target: evening,
+          detail: "下午时段，目标时间是 18:00"
+        };
+      }
+
+      return {
+        label: "今天已经下班",
+        target: null,
+        detail: "当前时间已到或超过 18:00"
+      };
+    }
+
+    function getUnitMinutes() {
+      const input = document.getElementById("unitInput");
+      const value = Number(input.value);
+      if (!Number.isFinite(value) || value <= 0) {
+        return null;
+      }
+
+      return Math.floor(value);
+    }
+
+    function loadStoredUnitMinutes() {
+      const storedValue = window.localStorage.getItem(STORAGE_KEY);
+      const parsedValue = Number(storedValue);
+      if (!Number.isFinite(parsedValue) || parsedValue <= 0) {
+        return 10;
+      }
+
+      return Math.floor(parsedValue);
+    }
+
+    function saveUnitMinutes() {
+      const unitMinutes = getUnitMinutes();
+      if (!unitMinutes) {
+        return;
+      }
+
+      window.localStorage.setItem(STORAGE_KEY, String(unitMinutes));
+    }
+
+    function renderDots(count) {
+      const dotsContainer = document.getElementById("dotsContainer");
+      dotsContainer.replaceChildren();
+
+      for (let index = 0; index < count; index += 1) {
+        const dot = document.createElement("span");
+        dot.className = "dot";
+        dot.setAttribute("aria-hidden", "true");
+        dotsContainer.appendChild(dot);
+      }
+    }
+
+    function formatBlocks(blocks) {
+      if (Number.isInteger(blocks)) {
+        return String(blocks);
+      }
+
+      return blocks.toFixed(1);
+    }
+
+    function updateView() {
+      const now = new Date();
+      const targetInfo = getDayTarget(now);
+      const countLabel = document.getElementById("countLabel");
+      const statusLabel = document.getElementById("statusLabel");
+      const clockLabel = document.getElementById("clockLabel");
+      const dateLabel = document.getElementById("dateLabel");
+      const weekdayLabel = document.getElementById("weekdayLabel");
+      const yearProgressText = document.getElementById("yearProgressText");
+      const yearProgressFill = document.getElementById("yearProgressFill");
+      const unitMinutes = getUnitMinutes();
+      const yearProgress = getYearProgress(now);
+
+      dateLabel.textContent = formatDate(now);
+      weekdayLabel.textContent = formatWeekday(now);
+      yearProgressText.textContent = "今年已过去 " + yearProgress.toFixed(2) + "%";
+      yearProgressFill.style.width = yearProgress.toFixed(2) + "%";
+      clockLabel.textContent = "当前时间：" + formatTime(now);
+      updateClockHands(now);
+
+      if (!unitMinutes) {
+        countLabel.textContent = "请输入大于0的分钟数";
+        statusLabel.textContent = "输入框改成 10、25 这类正整数后会立刻生效";
+        renderDots(0);
+        return;
+      }
+
+      if (!targetInfo.target) {
+        countLabel.textContent = "已经下班了";
+        statusLabel.textContent = targetInfo.detail + "，当前按每份 " + unitMinutes + " 分钟显示";
+        renderDots(0);
+        return;
+      }
+
+      const minutesLeft = Math.max(0, Math.floor((targetInfo.target - now) / 60000));
+      const blocks = minutesLeft / unitMinutes;
+      countLabel.textContent = "离下班还剩 " + formatBlocks(blocks) + " 个" + unitMinutes + "分钟";
+      statusLabel.textContent = targetInfo.detail + "，剩余总分钟数约为 " + minutesLeft + " 分钟";
+      renderDots(Math.floor(blocks));
+    }
+
+    buildClockTicks();
+    document.getElementById("unitInput").value = String(loadStoredUnitMinutes());
+    updateView();
+    setInterval(updateView, 1000);
+    document.getElementById("unitInput").addEventListener("input", function () {
+      saveUnitMinutes();
+      updateView();
+    });
+  </script>
+</body>
+</html>
