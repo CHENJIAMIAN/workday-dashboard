@@ -240,13 +240,29 @@
       padding: 24px 18px;
       border-radius: 22px;
       background: var(--accent-soft);
-      font-size: clamp(34px, 7vw, 66px);
-      font-weight: 800;
       line-height: 1.15;
     }
 
     .count-text {
       white-space: nowrap;
+      font-size: clamp(18px, 6.2vw, 58px);
+      font-weight: 800;
+      letter-spacing: -0.03em;
+      line-height: 1.05;
+    }
+
+    @media (max-width: 520px) {
+      .card {
+        padding: 28px 16px;
+      }
+
+      .count {
+        padding: 18px 12px;
+      }
+
+      .count-text {
+        font-size: clamp(16px, 5.9vw, 34px);
+      }
     }
 
     .dots {
