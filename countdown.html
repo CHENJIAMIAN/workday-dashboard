@@ -329,6 +329,164 @@
       font-size: 15px;
       color: var(--muted);
     }
+
+    .zone-section {
+      margin-top: 24px;
+      padding-top: 24px;
+      border-top: 2px dashed rgba(119, 95, 75, 0.2);
+    }
+
+    .zone-header {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+
+    .zone-header input {
+      width: 140px;
+      padding: 8px 12px;
+      border: 1px solid rgba(119, 95, 75, 0.25);
+      border-radius: 10px;
+      font-size: 15px;
+      color: var(--text);
+      background: rgba(255, 255, 255, 0.95);
+    }
+
+    .zone-header input:focus {
+      outline: 2px solid rgba(214, 106, 42, 0.25);
+      border-color: var(--accent);
+    }
+
+    .add-zone-btn {
+      padding: 8px 16px;
+      border: none;
+      border-radius: 10px;
+      font-size: 15px;
+      font-weight: 600;
+      color: #fff;
+      background: var(--accent);
+      cursor: pointer;
+    }
+
+    .add-zone-btn:hover {
+      background: #c55a1f;
+    }
+
+    .zones-container {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      justify-content: center;
+    }
+
+    .zone {
+      padding: 12px 16px;
+      border-radius: 12px;
+      background: rgba(255, 255, 255, 0.7);
+      border: 2px solid rgba(119, 95, 75, 0.15);
+      min-width: 100px;
+      text-align: center;
+      transition: all 0.2s ease;
+    }
+
+    .zone.drag-over {
+      border-color: var(--accent);
+      background: var(--accent-soft);
+    }
+
+    .zone-name {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text);
+      margin-bottom: 8px;
+    }
+
+    .zone-dots {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      justify-content: center;
+      min-height: 34px;
+    }
+
+    .zone-dot {
+      width: 34px;
+      height: 34px;
+      border-radius: 50%;
+      background: linear-gradient(180deg, #ef9a61, var(--accent));
+      box-shadow: 0 6px 14px rgba(214, 106, 42, 0.22);
+      cursor: grab;
+    }
+
+    .zone-dot:active {
+      cursor: grabbing;
+    }
+
+    .zone-dot.dragging {
+      opacity: 0.5;
+    }
+
+    .zone-count {
+      margin-top: 8px;
+      font-size: 13px;
+      color: var(--muted);
+    }
+
+    .unassigned-dots {
+      margin-top: 16px;
+      padding: 16px;
+      border-radius: 12px;
+      background: rgba(255, 255, 255, 0.5);
+      border: 2px dashed rgba(119, 95, 75, 0.2);
+    }
+
+    .unassigned-label {
+      font-size: 14px;
+      color: var(--muted);
+      margin-bottom: 12px;
+    }
+
+    .unassigned-dots-container {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 14px;
+      justify-content: center;
+      min-height: 34px;
+    }
+
+    .unassigned-dot {
+      width: 34px;
+      height: 34px;
+      border-radius: 50%;
+      background: linear-gradient(180deg, #ef9a61, var(--accent));
+      box-shadow: 0 6px 14px rgba(214, 106, 42, 0.22);
+      cursor: grab;
+    }
+
+    .unassigned-dot:active {
+      cursor: grabbing;
+    }
+
+    .unassigned-dot.dragging {
+      opacity: 0.5;
+    }
+
+    .delete-zone-btn {
+      margin-top: 8px;
+      padding: 4px 8px;
+      border: none;
+      border-radius: 6px;
+      font-size: 12px;
+      color: #fff;
+      background: #d14b38;
+      cursor: pointer;
+    }
+
+    .delete-zone-btn:hover {
+      background: #b8392a;
+    }
   </style>
 </head>
     <body>
@@ -365,11 +523,27 @@
       <label for="birthInput" class="eyebrow">出生日期</label>
       <input id="birthInput" type="date" class="birth-input">
     </div>
+    <div class="zone-section">
+      <div class="zone-header">
+        <input id="zoneNameInput" type="text" placeholder="区域名称">
+        <button class="add-zone-btn" id="addZoneBtn">添加区域</button>
+      </div>
+      <div class="zones-container" id="zonesContainer"></div>
+      <div class="unassigned-dots" id="unassignedDots">
+        <p class="unassigned-label">未分配时间块</p>
+        <div class="unassigned-dots-container" id="unassignedDotsContainer"></div>
+      </div>
+    </div>
   </main>
 
   <script>
     const STORAGE_KEY = "countdown-unit-minutes";
     const BIRTH_STORAGE_KEY = "countdown-birthdate";
+    const ZONES_STORAGE_KEY = "countdown-zones";
+
+    let zones = [];
+    let draggedDot = null;
+    let draggedFromZone = null;
 
     function formatTime(date) {
       return date.toLocaleTimeString("zh-CN", { hour12: false });
@@ -539,6 +713,172 @@
       return targetAge - currentAge;
     }
 
+    function loadZones() {
+      const storedValue = window.localStorage.getItem(ZONES_STORAGE_KEY);
+      if (!storedValue) {
+        return [];
+      }
+      try {
+        return JSON.parse(storedValue);
+      } catch (e) {
+        return [];
+      }
+    }
+
+    function saveZones() {
+      window.localStorage.setItem(ZONES_STORAGE_KEY, JSON.stringify(zones));
+    }
+
+    function addZone(name) {
+      if (!name.trim()) {
+        return;
+      }
+      zones.push({ name: name.trim(), dots: [] });
+      saveZones();
+      renderZones();
+    }
+
+    function deleteZone(index) {
+      const removedDots = zones[index].dots;
+      zones.splice(index, 1);
+      saveZones();
+      renderZones();
+    }
+
+    function renderZones() {
+      const container = document.getElementById("zonesContainer");
+      container.replaceChildren();
+
+      zones.forEach((zone, index) => {
+        const zoneEl = document.createElement("div");
+        zoneEl.className = "zone";
+        zoneEl.dataset.zoneIndex = index;
+
+        const nameEl = document.createElement("div");
+        nameEl.className = "zone-name";
+        nameEl.textContent = zone.name;
+
+        const dotsEl = document.createElement("div");
+        dotsEl.className = "zone-dots";
+
+        zone.dots.forEach((dotId, dotIndex) => {
+          const dotEl = document.createElement("span");
+          dotEl.className = "zone-dot";
+          dotEl.draggable = true;
+          dotEl.dataset.dotId = dotId;
+          dotEl.dataset.zoneIndex = index;
+          dotEl.dataset.dotIndexInZone = dotIndex;
+
+          dotEl.addEventListener("dragstart", handleDragStart);
+          dotEl.addEventListener("dragend", handleDragEnd);
+          dotsEl.appendChild(dotEl);
+        });
+
+        const countEl = document.createElement("div");
+        countEl.className = "zone-count";
+        countEl.textContent = zone.dots.length + "个时间块";
+
+        const deleteBtn = document.createElement("button");
+        deleteBtn.className = "delete-zone-btn";
+        deleteBtn.textContent = "删除";
+        deleteBtn.addEventListener("click", function () {
+          deleteZone(index);
+        });
+
+        zoneEl.appendChild(nameEl);
+        zoneEl.appendChild(dotsEl);
+        zoneEl.appendChild(countEl);
+        zoneEl.appendChild(deleteBtn);
+
+        zoneEl.addEventListener("dragover", handleDragOver);
+        zoneEl.addEventListener("dragleave", handleDragLeave);
+        zoneEl.addEventListener("drop", handleDrop);
+
+        container.appendChild(zoneEl);
+      });
+    }
+
+    function handleDragStart(e) {
+      draggedDot = e.target;
+      draggedFromZone = e.target.dataset.zoneIndex;
+      e.target.classList.add("dragging");
+      e.dataTransfer.effectAllowed = "move";
+    }
+
+    function handleDragEnd(e) {
+      e.target.classList.remove("dragging");
+      document.querySelectorAll(".zone").forEach(z => z.classList.remove("drag-over"));
+      draggedDot = null;
+      draggedFromZone = null;
+    }
+
+    function handleDragOver(e) {
+      e.preventDefault();
+      e.currentTarget.classList.add("drag-over");
+    }
+
+    function handleDragLeave(e) {
+      e.currentTarget.classList.remove("drag-over");
+    }
+
+    function handleDrop(e) {
+      e.preventDefault();
+      const targetZone = e.currentTarget;
+      targetZone.classList.remove("drag-over");
+
+      const targetZoneIndex = parseInt(targetZone.dataset.zoneIndex, 10);
+      const dotId = draggedDot.dataset.dotId;
+
+      if (draggedFromZone !== undefined && draggedFromZone !== null) {
+        const fromZoneIndex = parseInt(draggedFromZone, 10);
+        zones[fromZoneIndex].dots = zones[fromZoneIndex].dots.filter(id => id !== dotId);
+      }
+
+      zones[targetZoneIndex].dots.push(dotId);
+      saveZones();
+      renderZones();
+      renderUnassignedDots();
+    }
+
+    function renderUnassignedDots() {
+      const container = document.getElementById("unassignedDotsContainer");
+      const unitMinutes = getUnitMinutes();
+      const targetInfo = getDayTarget(new Date());
+
+      if (!unitMinutes || !targetInfo.target) {
+        container.replaceChildren();
+        return;
+      }
+
+      const now = new Date();
+      const minutesLeft = Math.max(0, Math.floor((targetInfo.target - now) / 60000));
+      const totalDots = Math.floor(minutesLeft / unitMinutes);
+
+      const assignedDotIds = new Set();
+      zones.forEach(zone => {
+        zone.dots.forEach(id => assignedDotIds.add(id));
+      });
+
+      container.replaceChildren();
+
+      for (let i = 0; i < totalDots; i++) {
+        const dotId = "dot-" + i;
+        if (assignedDotIds.has(dotId)) {
+          continue;
+        }
+
+        const dotEl = document.createElement("span");
+        dotEl.className = "unassigned-dot";
+        dotEl.draggable = true;
+        dotEl.dataset.dotId = dotId;
+
+        dotEl.addEventListener("dragstart", handleDragStart);
+        dotEl.addEventListener("dragend", handleDragEnd);
+
+        container.appendChild(dotEl);
+      }
+    }
+
     function renderDots(count) {
       const dotsContainer = document.getElementById("dotsContainer");
       dotsContainer.replaceChildren();
@@ -629,6 +969,8 @@
       countLabel.textContent = "离下班还剩 " + formatBlocks(blocks) + " 个" + unitMinutes + "分钟";
       statusLabel.textContent = targetInfo.detail + "，剩余总分钟数约为 " + minutesLeft + " 分钟";
       renderDots(Math.floor(blocks));
+      renderUnassignedDots();
+      renderZones();
     }
 
     buildClockTicks();
@@ -638,6 +980,9 @@
     if (storedBirth) {
       document.getElementById("birthInput").valueAsDate = storedBirth;
     }
+    // Load zones
+    zones = loadZones();
+    renderZones();
     updateView();
     setInterval(updateView, 1000);
     document.getElementById("unitInput").addEventListener("input", function () {
@@ -647,6 +992,20 @@
     document.getElementById("birthInput").addEventListener("change", function () {
       saveBirthDate();
       updateView();
+    });
+
+    document.getElementById("addZoneBtn").addEventListener("click", function () {
+      const input = document.getElementById("zoneNameInput");
+      addZone(input.value);
+      input.value = "";
+    });
+
+    document.getElementById("zoneNameInput").addEventListener("keypress", function (e) {
+      if (e.key === "Enter") {
+        const input = document.getElementById("zoneNameInput");
+        addZone(input.value);
+        input.value = "";
+      }
     });
   </script>
 </body>
