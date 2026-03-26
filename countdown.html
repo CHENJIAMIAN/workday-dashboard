@@ -50,6 +50,36 @@
       color: var(--muted);
     }
 
+    .age-label {
+      margin: 0 auto 8px;
+      font-size: 20px;
+      font-weight: 800;
+      color: var(--accent);
+    }
+
+    .years-left-label {
+      margin: 0 auto 16px;
+      font-size: 18px;
+      color: var(--muted);
+    }
+
+    .birth-input {
+      margin: 16px auto 0;
+      padding: 10px 12px;
+      border: 1px solid rgba(119, 95, 75, 0.25);
+      border-radius: 12px;
+      font-size: 16px;
+      color: var(--text);
+      background: rgba(255, 255, 255, 0.95);
+      width: 200px;
+      max-width: 90%;
+    }
+
+    .birth-input:focus {
+      outline: 2px solid rgba(214, 106, 42, 0.25);
+      border-color: var(--accent);
+    }
+
     .weekday {
       margin: 0 auto 16px;
       display: inline-block;
@@ -295,10 +325,12 @@
     }
   </style>
 </head>
-<body>
-  <main class="card">
-    <p class="date-label" id="dateLabel">今天是 2026-03-25</p>
-    <p class="weekday" id="weekdayLabel">周一</p>
+    <body>
+      <main class="card">
+        <p class="age-label" id="ageLabel">当前年龄: --岁</p>
+        <p class="years-left-label" id="yearsLeftLabel">距离45岁还剩 --年</p>
+        <p class="date-label" id="dateLabel">今天是 2026-03-25</p>
+        <p class="weekday" id="weekdayLabel">周一</p>
     <div class="year-progress" aria-label="今年进度">
       <p class="year-progress-text" id="yearProgressText">今年已过去 0.00%</p>
       <div class="year-progress-track">
@@ -322,10 +354,15 @@
     </div>
     <p class="status" id="statusLabel">上午按 12:00 计算，下午按 18:00 计算</p>
     <p class="clock" id="clockLabel">当前时间：--:--:--</p>
+    <div>
+      <label for="birthInput" class="eyebrow">出生日期</label>
+      <input id="birthInput" type="date" class="birth-input">
+    </div>
   </main>
 
   <script>
     const STORAGE_KEY = "countdown-unit-minutes";
+    const BIRTH_STORAGE_KEY = "countdown-birthdate";
 
     function formatTime(date) {
       return date.toLocaleTimeString("zh-CN", { hour12: false });
@@ -452,6 +489,49 @@
       window.localStorage.setItem(STORAGE_KEY, String(unitMinutes));
     }
 
+    function getBirthDate() {
+      const input = document.getElementById("birthInput");
+      const value = input.value;
+      if (!value) {
+        return null;
+      }
+      return new Date(value);
+    }
+
+    function loadStoredBirthDate() {
+      const storedValue = window.localStorage.getItem(BIRTH_STORAGE_KEY);
+      if (!storedValue) {
+        return null;
+      }
+      return new Date(storedValue);
+    }
+
+    function saveBirthDate() {
+      const birthDate = getBirthDate();
+      if (!birthDate) {
+        return;
+      }
+      window.localStorage.setItem(BIRTH_STORAGE_KEY, birthDate.toISOString());
+    }
+
+    function calculateAge(birthDate, now) {
+      const ageMs = now - birthDate;
+      const ageYears = ageMs / (1000 * 60 * 60 * 24 * 365.25); // Account for leap years
+      return ageYears;
+    }
+
+    function formatAge(ageYears) {
+      return ageYears.toFixed(1);
+    }
+
+    function yearsUntilTarget(birthDate, targetAge, now) {
+      const currentAge = calculateAge(birthDate, now);
+      if (currentAge >= targetAge) {
+        return 0;
+      }
+      return targetAge - currentAge;
+    }
+
     function renderDots(count) {
       const dotsContainer = document.getElementById("dotsContainer");
       dotsContainer.replaceChildren();
@@ -482,8 +562,11 @@
       const weekdayLabel = document.getElementById("weekdayLabel");
       const yearProgressText = document.getElementById("yearProgressText");
       const yearProgressFill = document.getElementById("yearProgressFill");
+      const ageLabel = document.getElementById("ageLabel");
+      const yearsLeftLabel = document.getElementById("yearsLeftLabel");
       const unitMinutes = getUnitMinutes();
       const yearProgress = getYearProgress(now);
+      const birthDate = loadStoredBirthDate() || getBirthDate();
 
       dateLabel.textContent = formatDate(now);
       weekdayLabel.textContent = formatWeekday(now);
@@ -491,6 +574,21 @@
       yearProgressFill.style.width = yearProgress.toFixed(2) + "%";
       clockLabel.textContent = "当前时间：" + formatTime(now);
       updateClockHands(now);
+
+      // Update age information
+      if (birthDate) {
+        const ageYears = calculateAge(birthDate, now);
+        ageLabel.textContent = "当前年龄: " + formatAge(ageYears) + "岁";
+        const yearsLeft = yearsUntilTarget(birthDate, 45, now);
+        if (yearsLeft > 0) {
+          yearsLeftLabel.textContent = "距离45岁还剩 " + yearsLeft.toFixed(1) + "年";
+        } else {
+          yearsLeftLabel.textContent = "已达到或超过45岁";
+        }
+      } else {
+        ageLabel.textContent = "当前年龄: --岁";
+        yearsLeftLabel.textContent = "距离45岁还剩 --年";
+      }
 
       if (!unitMinutes) {
         countLabel.textContent = "请输入大于0的分钟数";
@@ -515,10 +613,19 @@
 
     buildClockTicks();
     document.getElementById("unitInput").value = String(loadStoredUnitMinutes());
+    // Load and set birth date if available
+    const storedBirth = loadStoredBirthDate();
+    if (storedBirth) {
+      document.getElementById("birthInput").valueAsDate = storedBirth;
+    }
     updateView();
     setInterval(updateView, 1000);
     document.getElementById("unitInput").addEventListener("input", function () {
       saveUnitMinutes();
+      updateView();
+    });
+    document.getElementById("birthInput").addEventListener("change", function () {
+      saveBirthDate();
       updateView();
     });
   </script>
