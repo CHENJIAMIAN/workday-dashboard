@@ -440,6 +440,12 @@
       border-radius: 12px;
       background: rgba(255, 255, 255, 0.5);
       border: 2px dashed rgba(119, 95, 75, 0.2);
+      transition: all 0.2s ease;
+    }
+
+    .unassigned-dots.drag-over {
+      border-color: var(--accent);
+      background: var(--accent-soft);
     }
 
     .unassigned-label {
@@ -842,8 +848,36 @@
 
     function renderUnassignedDots() {
       const container = document.getElementById("unassignedDotsContainer");
+      const unassignedSection = document.getElementById("unassignedDots");
       const unitMinutes = getUnitMinutes();
       const targetInfo = getDayTarget(new Date());
+
+      // Add drag event listeners to unassigned section
+      unassignedSection.addEventListener("dragover", function(e) {
+        e.preventDefault();
+        unassignedSection.classList.add("drag-over");
+      });
+      unassignedSection.addEventListener("dragleave", function(e) {
+        unassignedSection.classList.remove("drag-over");
+      });
+      unassignedSection.addEventListener("drop", function(e) {
+        e.preventDefault();
+        unassignedSection.classList.remove("drag-over");
+        
+        if (draggedDot) {
+          const dotId = draggedDot.dataset.dotId;
+          
+          // Remove from zone if it was in one
+          if (draggedFromZone !== undefined && draggedFromZone !== null) {
+            const fromZoneIndex = parseInt(draggedFromZone, 10);
+            zones[fromZoneIndex].dots = zones[fromZoneIndex].dots.filter(id => id !== dotId);
+          }
+          
+          saveZones();
+          renderZones();
+          renderUnassignedDots();
+        }
+      });
 
       if (!unitMinutes || !targetInfo.target) {
         container.replaceChildren();
