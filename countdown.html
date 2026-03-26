@@ -63,6 +63,12 @@
       color: var(--muted);
     }
 
+    .equivalent-date-label {
+      margin: 0 auto 16px;
+      font-size: 16px;
+      color: var(--text);
+    }
+
     .birth-input {
       margin: 16px auto 0;
       padding: 10px 12px;
@@ -329,6 +335,7 @@
       <main class="card">
         <p class="age-label" id="ageLabel">当前年龄: --岁</p>
         <p class="years-left-label" id="yearsLeftLabel">距离45岁还剩 --年</p>
+        <p class="equivalent-date-label" id="equivalentDateLabel">相当于 --年--月--日</p>
         <p class="date-label" id="dateLabel">今天是 2026-03-25</p>
         <p class="weekday" id="weekdayLabel">周一</p>
     <div class="year-progress" aria-label="今年进度">
@@ -575,20 +582,33 @@
       clockLabel.textContent = "当前时间：" + formatTime(now);
       updateClockHands(now);
 
-      // Update age information
-      if (birthDate) {
-        const ageYears = calculateAge(birthDate, now);
-        ageLabel.textContent = "当前年龄: " + formatAge(ageYears) + "岁";
-        const yearsLeft = yearsUntilTarget(birthDate, 45, now);
-        if (yearsLeft > 0) {
-          yearsLeftLabel.textContent = "距离45岁还剩 " + yearsLeft.toFixed(1) + "年";
-        } else {
-          yearsLeftLabel.textContent = "已达到或超过45岁";
-        }
-      } else {
-        ageLabel.textContent = "当前年龄: --岁";
-        yearsLeftLabel.textContent = "距离45岁还剩 --年";
-      }
+       // Update age information
+       if (birthDate) {
+         const ageYears = calculateAge(birthDate, now);
+         ageLabel.textContent = "当前年龄: " + formatAge(ageYears) + "岁";
+         const yearsLeft = yearsUntilTarget(birthDate, 45, now);
+         if (yearsLeft > 0) {
+           yearsLeftLabel.textContent = "距离45岁还剩 " + yearsLeft.toFixed(1) + "年";
+           
+           // Calculate equivalent date
+           const equivalentDate = new Date(now);
+           equivalentDate.setFullYear(equivalentDate.getFullYear() - Math.floor(yearsLeft));
+           equivalentDate.setMonth(now.getMonth());
+           equivalentDate.setDate(now.getDate());
+           
+           const eqYear = equivalentDate.getFullYear();
+           const eqMonth = String(equivalentDate.getMonth() + 1).padStart(2, "0");
+           const eqDay = String(equivalentDate.getDate()).padStart(2, "0");
+           document.getElementById("equivalentDateLabel").textContent = "相当于 " + eqYear + "年" + eqMonth + "月" + eqDay + "日";
+         } else {
+           yearsLeftLabel.textContent = "已达到或超过45岁";
+           document.getElementById("equivalentDateLabel").textContent = "";
+         }
+       } else {
+         ageLabel.textContent = "当前年龄: --岁";
+         yearsLeftLabel.textContent = "距离45岁还剩 --年";
+         document.getElementById("equivalentDateLabel").textContent = "";
+       }
 
       if (!unitMinutes) {
         countLabel.textContent = "请输入大于0的分钟数";
