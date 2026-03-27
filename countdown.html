@@ -493,6 +493,114 @@
     .delete-zone-btn:hover {
       background: #b8392a;
     }
+
+    .countdown-days-section {
+      margin-top: 16px;
+      padding-top: 16px;
+      border-top: 2px dashed rgba(119, 95, 75, 0.2);
+    }
+
+    .countdown-days-header {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+
+    .countdown-days-header input[type="text"] {
+      width: 100px;
+      padding: 6px 10px;
+      border: 1px solid rgba(119, 95, 75, 0.25);
+      border-radius: 8px;
+      font-size: 14px;
+      color: var(--text);
+      background: rgba(255, 255, 255, 0.95);
+    }
+
+    .countdown-days-header input[type="date"] {
+      padding: 6px 10px;
+      border: 1px solid rgba(119, 95, 75, 0.25);
+      border-radius: 8px;
+      font-size: 14px;
+      color: var(--text);
+      background: rgba(255, 255, 255, 0.95);
+    }
+
+    .countdown-days-header input:focus {
+      outline: 2px solid rgba(214, 106, 42, 0.25);
+      border-color: var(--accent);
+    }
+
+    .add-countdown-btn {
+      padding: 6px 12px;
+      border: none;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 600;
+      color: #fff;
+      background: var(--accent);
+      cursor: pointer;
+    }
+
+    .add-countdown-btn:hover {
+      background: #c55a1f;
+    }
+
+    .countdown-days-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      justify-content: center;
+      margin-top: 12px;
+    }
+
+    .countdown-item {
+      padding: 10px 14px;
+      border-radius: 10px;
+      background: rgba(255, 255, 255, 0.6);
+      border: 1px solid rgba(119, 95, 75, 0.15);
+      min-width: 120px;
+      text-align: center;
+    }
+
+    .countdown-item-name {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text);
+    }
+
+    .countdown-item-days {
+      margin-top: 4px;
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--accent);
+    }
+
+    .countdown-item-days.past {
+      color: #7a9a3d;
+    }
+
+    .countdown-item-date {
+      margin-top: 4px;
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    .delete-countdown-btn {
+      margin-top: 6px;
+      padding: 3px 6px;
+      border: none;
+      border-radius: 4px;
+      font-size: 11px;
+      color: #fff;
+      background: #d14b38;
+      cursor: pointer;
+    }
+
+    .delete-countdown-btn:hover {
+      background: #b8392a;
+    }
   </style>
 </head>
     <body>
@@ -540,14 +648,24 @@
         <div class="unassigned-dots-container" id="unassignedDotsContainer"></div>
       </div>
     </div>
+    <div class="countdown-days-section">
+      <div class="countdown-days-header">
+        <input id="countdownNameInput" type="text" placeholder="名称">
+        <input id="countdownDateInput" type="date">
+        <button class="add-countdown-btn" id="addCountdownBtn">添加</button>
+      </div>
+      <div class="countdown-days-list" id="countdownDaysList"></div>
+    </div>
   </main>
 
   <script>
     const STORAGE_KEY = "countdown-unit-minutes";
     const BIRTH_STORAGE_KEY = "countdown-birthdate";
     const ZONES_STORAGE_KEY = "countdown-zones";
+    const COUNTDOWNS_STORAGE_KEY = "countdown-days";
 
     let zones = [];
+    let countdowns = [];
     let draggedDot = null;
     let draggedFromZone = null;
 
@@ -933,6 +1051,91 @@
       return blocks.toFixed(1);
     }
 
+    function loadCountdowns() {
+      const storedValue = window.localStorage.getItem(COUNTDOWNS_STORAGE_KEY);
+      if (!storedValue) {
+        return [];
+      }
+      try {
+        return JSON.parse(storedValue);
+      } catch (e) {
+        return [];
+      }
+    }
+
+    function saveCountdowns() {
+      window.localStorage.setItem(COUNTDOWNS_STORAGE_KEY, JSON.stringify(countdowns));
+    }
+
+    function addCountdown(name, dateStr) {
+      if (!name.trim() || !dateStr) {
+        return;
+      }
+      countdowns.push({ name: name.trim(), date: dateStr });
+      saveCountdowns();
+      renderCountdowns();
+    }
+
+    function deleteCountdown(index) {
+      countdowns.splice(index, 1);
+      saveCountdowns();
+      renderCountdowns();
+    }
+
+    function renderCountdowns() {
+      const container = document.getElementById("countdownDaysList");
+      container.replaceChildren();
+
+      const now = new Date();
+      now.setHours(0, 0, 0, 0);
+
+      countdowns.forEach((item, index) => {
+        const targetDate = new Date(item.date);
+        targetDate.setHours(0, 0, 0, 0);
+
+        const diffTime = targetDate - now;
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+        const itemEl = document.createElement("div");
+        itemEl.className = "countdown-item";
+
+        const nameEl = document.createElement("div");
+        nameEl.className = "countdown-item-name";
+        nameEl.textContent = item.name;
+
+        const daysEl = document.createElement("div");
+        daysEl.className = "countdown-item-days";
+        if (diffDays > 0) {
+          daysEl.textContent = "还剩 " + diffDays + " 天";
+        } else if (diffDays === 0) {
+          daysEl.textContent = "就是今天!";
+        } else {
+          daysEl.classList.add("past");
+          daysEl.textContent = "已过 " + Math.abs(diffDays) + " 天";
+        }
+
+        const dateEl = document.createElement("div");
+        dateEl.className = "countdown-item-date";
+        const month = String(targetDate.getMonth() + 1).padStart(2, "0");
+        const day = String(targetDate.getDate()).padStart(2, "0");
+        dateEl.textContent = month + "-" + day;
+
+        const deleteBtn = document.createElement("button");
+        deleteBtn.className = "delete-countdown-btn";
+        deleteBtn.textContent = "删除";
+        deleteBtn.addEventListener("click", function () {
+          deleteCountdown(index);
+        });
+
+        itemEl.appendChild(nameEl);
+        itemEl.appendChild(daysEl);
+        itemEl.appendChild(dateEl);
+        itemEl.appendChild(deleteBtn);
+
+        container.appendChild(itemEl);
+      });
+    }
+
     function updateView() {
       const now = new Date();
       const targetInfo = getDayTarget(now);
@@ -1017,6 +1220,9 @@
     // Load zones
     zones = loadZones();
     renderZones();
+    // Load countdowns
+    countdowns = loadCountdowns();
+    renderCountdowns();
     updateView();
     setInterval(updateView, 1000);
     document.getElementById("unitInput").addEventListener("input", function () {
@@ -1039,6 +1245,24 @@
         const input = document.getElementById("zoneNameInput");
         addZone(input.value);
         input.value = "";
+      }
+    });
+
+    document.getElementById("addCountdownBtn").addEventListener("click", function () {
+      const nameInput = document.getElementById("countdownNameInput");
+      const dateInput = document.getElementById("countdownDateInput");
+      addCountdown(nameInput.value, dateInput.value);
+      nameInput.value = "";
+      dateInput.value = "";
+    });
+
+    document.getElementById("countdownNameInput").addEventListener("keypress", function (e) {
+      if (e.key === "Enter") {
+        const nameInput = document.getElementById("countdownNameInput");
+        const dateInput = document.getElementById("countdownDateInput");
+        addCountdown(nameInput.value, dateInput.value);
+        nameInput.value = "";
+        dateInput.value = "";
       }
     });
   </script>
