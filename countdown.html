@@ -601,6 +601,45 @@
     .delete-countdown-btn:hover {
       background: #b8392a;
     }
+
+    .data-section {
+      margin-top: 16px;
+      padding-top: 16px;
+      border-top: 2px dashed rgba(119, 95, 75, 0.2);
+    }
+
+    .data-buttons {
+      display: flex;
+      gap: 12px;
+      justify-content: center;
+    }
+
+    .data-btn {
+      padding: 8px 16px;
+      border: none;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 600;
+      color: #fff;
+      background: #5a8a3d;
+      cursor: pointer;
+    }
+
+    .data-btn:hover {
+      background: #4a7534;
+    }
+
+    .data-btn.import-btn {
+      background: #3d6a8a;
+    }
+
+    .data-btn.import-btn:hover {
+      background: #2d5a7a;
+    }
+
+    .import-input {
+      display: none;
+    }
   </style>
 </head>
     <body>
@@ -655,6 +694,13 @@
         <button class="add-countdown-btn" id="addCountdownBtn">添加</button>
       </div>
       <div class="countdown-days-list" id="countdownDaysList"></div>
+    </div>
+    <div class="data-section">
+      <div class="data-buttons">
+        <button class="data-btn" id="exportBtn">导出数据</button>
+        <button class="data-btn import-btn" id="importBtn">导入数据</button>
+        <input type="file" id="importInput" class="import-input" accept=".json">
+      </div>
     </div>
   </main>
 
@@ -1264,6 +1310,72 @@
         nameInput.value = "";
         dateInput.value = "";
       }
+    });
+
+    function exportData() {
+      const data = {
+        unitMinutes: loadStoredUnitMinutes(),
+        birthDate: window.localStorage.getItem(BIRTH_STORAGE_KEY),
+        zones: zones,
+        countdowns: countdowns,
+        exportTime: new Date().toISOString()
+      };
+      const jsonStr = JSON.stringify(data, null, 2);
+      const blob = new Blob([jsonStr], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "workday-dashboard-backup-" + new Date().toISOString().slice(0, 10) + ".json";
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }
+
+    function importData(jsonStr) {
+      try {
+        const data = JSON.parse(jsonStr);
+        if (data.unitMinutes) {
+          window.localStorage.setItem(STORAGE_KEY, String(data.unitMinutes));
+          document.getElementById("unitInput").value = String(data.unitMinutes);
+        }
+        if (data.birthDate) {
+          window.localStorage.setItem(BIRTH_STORAGE_KEY, data.birthDate);
+          const birthDate = new Date(data.birthDate);
+          document.getElementById("birthInput").valueAsDate = birthDate;
+        }
+        if (Array.isArray(data.zones)) {
+          zones = data.zones;
+          saveZones();
+          renderZones();
+        }
+        if (Array.isArray(data.countdowns)) {
+          countdowns = data.countdowns;
+          saveCountdowns();
+          renderCountdowns();
+        }
+        updateView();
+        alert("导入成功！");
+      } catch (e) {
+        alert("导入失败，文件格式不正确");
+      }
+    }
+
+    document.getElementById("exportBtn").addEventListener("click", exportData);
+
+    document.getElementById("importBtn").addEventListener("click", function () {
+      document.getElementById("importInput").click();
+    });
+
+    document.getElementById("importInput").addEventListener("change", function (e) {
+      const file = e.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = function (event) {
+        importData(event.target.result);
+      };
+      reader.readAsText(file);
+      e.target.value = "";
     });
   </script>
 </body>
