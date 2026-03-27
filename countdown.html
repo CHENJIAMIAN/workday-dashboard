@@ -24,23 +24,31 @@
     body {
       margin: 0;
       min-height: 100vh;
-      display: grid;
-      place-items: center;
+      display: block;
+      padding: 24px;
       font-family: "Microsoft YaHei", "PingFang SC", sans-serif;
-      background:
-        radial-gradient(circle at top left, rgba(255, 255, 255, 0.8), transparent 32%),
-        linear-gradient(160deg, var(--bg-top), var(--bg-bottom));
+      background: linear-gradient(160deg, var(--bg-top), var(--bg-bottom));
       color: var(--text);
     }
 
+    .dashboard {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 24px;
+      max-width: 1600px;
+      margin: 0 auto;
+    }
+
     .card {
-      width: min(92vw, 720px);
-      padding: 40px 28px;
-      border-radius: 28px;
+      padding: 24px;
+      border-radius: 20px;
       background: var(--card);
       box-shadow: var(--shadow);
       backdrop-filter: blur(12px);
-      text-align: center;
+    }
+
+    .card-full {
+      grid-column: 1 / -1;
     }
 
     .eyebrow {
@@ -501,9 +509,15 @@
     }
 
     .countdown-days-header {
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--text);
+      margin-bottom: 16px;
+    }
+
+    .countdown-days-header-controls {
       display: flex;
       align-items: center;
-      justify-content: center;
       gap: 8px;
       margin-bottom: 12px;
     }
@@ -643,68 +657,84 @@
   </style>
 </head>
     <body>
-      <main class="card">
-        <p class="age-label" id="ageLabel">当前年龄: --岁</p>
-        <p class="years-left-label" id="yearsLeftLabel">距离45岁还剩 --年</p>
-        <p class="equivalent-date-label" id="equivalentDateLabel">相当于 --年--月--日</p>
-        <p class="date-label" id="dateLabel">今天是 2026-03-25</p>
-        <p class="weekday" id="weekdayLabel">周一</p>
-    <div class="year-progress" aria-label="今年进度">
-      <p class="year-progress-text" id="yearProgressText">今年已过去 0.00%</p>
-      <div class="year-progress-track">
-        <div class="year-progress-fill" id="yearProgressFill"></div>
-      </div>
-    </div>
-    <div class="clock-widget" aria-label="当前真实时间时钟">
-      <div class="clock-face" id="clockFace"></div>
-      <div class="hand hour" id="hourHand"></div>
-      <div class="hand minute" id="minuteHand"></div>
-      <div class="hand second" id="secondHand"></div>
-      <div class="clock-center"></div>
-    </div>
-    <div class="count">
-      <div class="count-text" id="countLabel">还剩 0 个10分钟</div>
-      <div class="dots" id="dotsContainer" aria-label="剩余份数圆点"></div>
-    </div>
-    <div class="controls">
-      <label for="unitInput">每份分钟数</label>
-      <input id="unitInput" type="number" min="1" step="1" value="10" inputmode="numeric">
-    </div>
-    <p class="status" id="statusLabel">上午按 12:00 计算，下午按 18:00 计算</p>
-    <p class="clock" id="clockLabel">当前时间：--:--:--</p>
-    <div>
-      <label for="birthInput" class="eyebrow">出生日期</label>
-      <input id="birthInput" type="date" class="birth-input">
-    </div>
-    <div class="zone-section">
-      <div class="zone-header">
-        <input id="zoneNameInput" type="text" placeholder="区域名称">
-        <button class="add-zone-btn" id="addZoneBtn">添加区域</button>
-      </div>
-      <div class="zones-container" id="zonesContainer"></div>
-      <div class="unassigned-dots" id="unassignedDots">
-        <p class="unassigned-label">未分配时间块</p>
-        <div class="unassigned-dots-container" id="unassignedDotsContainer"></div>
-      </div>
-    </div>
-    <div class="countdown-days-section">
-      <div class="countdown-days-header">
-        <input id="countdownNameInput" type="text" placeholder="名称">
-        <input id="countdownDateInput" type="date">
-        <button class="add-countdown-btn" id="addCountdownBtn">添加</button>
-      </div>
-      <div class="countdown-days-list" id="countdownDaysList"></div>
-    </div>
-    <div class="data-section">
-      <div class="data-buttons">
-        <button class="data-btn" id="exportBtn">导出数据</button>
-        <button class="data-btn import-btn" id="importBtn">导入数据</button>
-        <input type="file" id="importInput" class="import-input" accept=".json">
-      </div>
-    </div>
-  </main>
+      <div class="dashboard">
+        <main class="card">
+          <p class="date-label" id="dateLabel">今天是 2026-03-25</p>
+          <p class="weekday" id="weekdayLabel">周一</p>
+          <div class="year-progress" aria-label="今年进度">
+            <p class="year-progress-text" id="yearProgressText">今年已过去 0.00%</p>
+            <div class="year-progress-track">
+              <div class="year-progress-fill" id="yearProgressFill"></div>
+            </div>
+          </div>
+          <div class="clock-widget" aria-label="当前真实时间时钟">
+            <div class="clock-face" id="clockFace"></div>
+            <div class="hand hour" id="hourHand"></div>
+            <div class="hand minute" id="minuteHand"></div>
+            <div class="hand second" id="secondHand"></div>
+            <div class="clock-center"></div>
+          </div>
+          <p class="clock" id="clockLabel">当前时间：--:--:--</p>
+        </main>
 
-  <script>
+        <main class="card">
+          <p class="age-label" id="ageLabel">当前年龄: --岁</p>
+          <p class="years-left-label" id="yearsLeftLabel">距离45岁还剩 --年</p>
+          <p class="equivalent-date-label" id="equivalentDateLabel">相当于 --年--月--日</p>
+          <div>
+            <label for="birthInput" class="eyebrow">出生日期</label>
+            <input id="birthInput" type="date" class="birth-input">
+          </div>
+        </main>
+
+        <main class="card">
+          <p class="countdown-days-header">倒数日 / 纪念日</p>
+          <div class="countdown-days-header-controls">
+            <input id="countdownNameInput" type="text" placeholder="名称">
+            <input id="countdownDateInput" type="date">
+            <button class="add-countdown-btn" id="addCountdownBtn">添加</button>
+          </div>
+          <div class="countdown-days-list" id="countdownDaysList"></div>
+        </main>
+
+        <main class="card">
+          <p class="countdown-days-header">下班倒计时</p>
+          <div class="count">
+            <div class="count-text" id="countLabel">还剩 0 个10分钟</div>
+            <div class="dots" id="dotsContainer" aria-label="剩余份数圆点"></div>
+          </div>
+          <div class="controls">
+            <label for="unitInput">每份分钟数</label>
+            <input id="unitInput" type="number" min="1" step="1" value="10" inputmode="numeric">
+          </div>
+          <p class="status" id="statusLabel">上午按 12:00 计算，下午按 18:00 计算</p>
+        </main>
+
+        <main class="card">
+          <p class="countdown-days-header">时间分配区域</p>
+          <div class="zone-header">
+            <input id="zoneNameInput" type="text" placeholder="区域名称">
+            <button class="add-zone-btn" id="addZoneBtn">添加区域</button>
+          </div>
+          <div class="zones-container" id="zonesContainer"></div>
+          <div class="unassigned-dots" id="unassignedDots">
+            <p class="unassigned-label">未分配时间块</p>
+            <div class="unassigned-dots-container" id="unassignedDotsContainer"></div>
+          </div>
+        </main>
+
+        <main class="card">
+          <div class="data-section">
+            <p class="countdown-days-header">数据管理</p>
+            <div class="data-buttons">
+              <button class="data-btn" id="exportBtn">导出数据</button>
+              <button class="data-btn import-btn" id="importBtn">导入数据</button>
+              <input type="file" id="importInput" class="import-input" accept=".json">
+            </div>
+          </div>
+        </main>
+      </div>
+    </body>
     const STORAGE_KEY = "countdown-unit-minutes";
     const BIRTH_STORAGE_KEY = "countdown-birthdate";
     const ZONES_STORAGE_KEY = "countdown-zones";
