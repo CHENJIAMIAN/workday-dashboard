@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>下班倒计时</title>
+  <script src="https://accounts.google.com/gsi/client" async defer></script>
   <style>
     :root {
       color-scheme: light;
@@ -739,6 +740,85 @@
       background: #2d5a7a;
     }
 
+    .data-btn.google-drive-btn {
+      background: #4285f4;
+    }
+
+    .data-btn.google-drive-btn:hover {
+      background: #3367d6;
+    }
+
+    .gdrive-modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.5);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+    }
+
+    .gdrive-modal {
+      background: var(--card);
+      border-radius: 16px;
+      padding: 24px;
+      max-width: 400px;
+      width: 90%;
+      text-align: center;
+    }
+
+    .gdrive-modal h3 {
+      margin: 0 0 12px;
+      font-size: 18px;
+      color: var(--text);
+    }
+
+    .gdrive-modal p {
+      margin: 0 0 16px;
+      font-size: 14px;
+      color: var(--muted);
+    }
+
+    .gdrive-modal input {
+      width: 100%;
+      padding: 8px 12px;
+      border: 1px solid rgba(119, 95, 75, 0.25);
+      border-radius: 8px;
+      font-size: 14px;
+      color: var(--text);
+      background: rgba(255, 255, 255, 0.95);
+      margin-bottom: 12px;
+      box-sizing: border-box;
+    }
+
+    .gdrive-modal-buttons {
+      display: flex;
+      gap: 8px;
+      justify-content: center;
+    }
+
+    .gdrive-modal-btn {
+      padding: 8px 16px;
+      border: none;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    .gdrive-modal-btn.confirm-btn {
+      color: #fff;
+      background: #4285f4;
+    }
+
+    .gdrive-modal-btn.cancel-btn {
+      color: var(--text);
+      background: rgba(119, 95, 75, 0.15);
+    }
+
     .import-input {
       display: none;
     }
@@ -800,6 +880,7 @@
       </div>
       <div class="data-buttons">
         <button class="data-btn" id="exportBtn">导出数据</button>
+        <button class="data-btn google-drive-btn" id="exportGDriveBtn">导出到Google Drive</button>
         <button class="data-btn import-btn" id="importBtn">导入数据</button>
         <input type="file" id="importInput" class="import-input" accept=".json">
       </div>
@@ -1532,6 +1613,113 @@
     }
 
     document.getElementById("exportBtn").addEventListener("click", exportData);
+
+    const GDRIVE_CLIENT_ID_KEY = "gdrive-client-id";
+
+    document.getElementById("exportGDriveBtn").addEventListener("click", function () {
+      const storedClientId = window.localStorage.getItem(GDRIVE_CLIENT_ID_KEY);
+      showGDriveModal(storedClientId);
+    });
+
+    function showGDriveModal(storedClientId) {
+      const overlay = document.createElement("div");
+      overlay.className = "gdrive-modal-overlay";
+
+      const modal = document.createElement("div");
+      modal.className = "gdrive-modal";
+
+      modal.innerHTML = `
+        <h3>导出到 Google Drive</h3>
+        <p>${storedClientId ? "点击确认将数据导出到您的 Google Drive" : "请输入您的 Google API Client ID 以启用导出功能"}</p>
+        ${!storedClientId ? '<input id="gdriveClientIdInput" type="text" placeholder="Google API Client ID">' : ""}
+        <div class="gdrive-modal-buttons">
+          <button class="gdrive-modal-btn cancel-btn" id="gdriveCancelBtn">取消</button>
+          <button class="gdrive-modal-btn confirm-btn" id="gdriveConfirmBtn">${storedClientId ? "确认导出" : "保存并授权"}</button>
+        </div>
+      `;
+
+      overlay.appendChild(modal);
+      document.body.appendChild(overlay);
+
+      document.getElementById("gdriveCancelBtn").addEventListener("click", function () {
+        document.body.removeChild(overlay);
+      });
+
+      overlay.addEventListener("click", function (e) {
+        if (e.target === overlay) {
+          document.body.removeChild(overlay);
+        }
+      });
+
+      document.getElementById("gdriveConfirmBtn").addEventListener("click", function () {
+        let clientId = storedClientId;
+        if (!clientId) {
+          clientId = document.getElementById("gdriveClientIdInput").value.trim();
+          if (!clientId) {
+            alert("请输入有效的 Client ID");
+            return;
+          }
+          window.localStorage.setItem(GDRIVE_CLIENT_ID_KEY, clientId);
+        }
+        document.body.removeChild(overlay);
+        exportToGoogleDrive(clientId);
+      });
+    }
+
+    function exportToGoogleDrive(clientId) {
+      const SCOPES = "https://www.googleapis.com/auth/drive.file";
+      const data = {
+        unitMinutes: loadStoredUnitMinutes(),
+        birthDate: window.localStorage.getItem(BIRTH_STORAGE_KEY),
+        zones: zones,
+        countdowns: countdowns,
+        exportTime: new Date().toISOString()
+      };
+      const jsonStr = JSON.stringify(data, null, 2);
+      const fileName = "workday-dashboard-backup-" + new Date().toISOString().slice(0, 10) + ".json";
+
+      const tokenClient = google.accounts.oauth2.initTokenClient({
+        client_id: clientId,
+        scope: SCOPES,
+        callback: function (response) {
+          if (response.error) {
+            alert("授权失败: " + response.error);
+            return;
+          }
+          uploadToDrive(response.access_token, jsonStr, fileName);
+        }
+      });
+
+      tokenClient.requestAccessToken();
+    }
+
+    function uploadToDrive(accessToken, content, fileName) {
+      const metadata = {
+        name: fileName,
+        mimeType: "application/json"
+      };
+
+      const form = new FormData();
+      form.append("metadata", new Blob([JSON.stringify(metadata)], { type: "application/json" }));
+      form.append("file", new Blob([content], { type: "application/json" }));
+
+      fetch("https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart", {
+        method: "POST",
+        headers: new Headers({ Authorization: "Bearer " + accessToken }),
+        body: form
+      })
+        .then(function (res) { return res.json(); })
+        .then(function (data) {
+          if (data.id) {
+            alert("导出成功！文件已保存到 Google Drive");
+          } else {
+            alert("导出失败: " + (data.error ? data.error.message : "未知错误"));
+          }
+        })
+        .catch(function (e) {
+          alert("导出失败: " + e.message);
+        });
+    }
 
     document.getElementById("importBtn").addEventListener("click", function () {
       document.getElementById("importInput").click();
