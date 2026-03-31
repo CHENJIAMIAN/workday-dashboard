@@ -605,6 +605,62 @@
       background: #b8392a;
     }
 
+    .edit-countdown-btn {
+      padding: 2px 6px;
+      border: none;
+      border-radius: 4px;
+      font-size: 11px;
+      color: #fff;
+      background: #3d6a8a;
+      cursor: pointer;
+    }
+
+    .edit-countdown-btn:hover {
+      background: #2d5a7a;
+    }
+
+    .countdown-edit-form {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .countdown-edit-form input[type="text"] {
+      width: 60px;
+      padding: 2px 6px;
+      border: 1px solid rgba(119, 95, 75, 0.25);
+      border-radius: 4px;
+      font-size: 12px;
+      color: var(--text);
+      background: rgba(255, 255, 255, 0.95);
+    }
+
+    .countdown-edit-form input[type="date"] {
+      padding: 2px 6px;
+      border: 1px solid rgba(119, 95, 75, 0.25);
+      border-radius: 4px;
+      font-size: 12px;
+      color: var(--text);
+      background: rgba(255, 255, 255, 0.95);
+    }
+
+    .countdown-edit-form button {
+      padding: 2px 6px;
+      border: none;
+      border-radius: 4px;
+      font-size: 11px;
+      color: #fff;
+      cursor: pointer;
+    }
+
+    .countdown-edit-form .save-btn {
+      background: #5a8a3d;
+    }
+
+    .countdown-edit-form .cancel-btn {
+      background: #8a6a3d;
+    }
+
     .countdown-item {
       display: inline-flex;
       align-items: center;
@@ -1174,7 +1230,33 @@
       renderCountdowns();
     }
 
-    function renderCountdowns() {
+    function startEditCountdown(index) {
+      renderCountdowns(index);
+    }
+
+    function saveEditCountdown(index, name, dateStr) {
+      if (!name.trim() || !dateStr) {
+        return;
+      }
+      countdowns[index] = { name: name.trim(), date: dateStr };
+      saveCountdowns();
+      renderCountdowns();
+    }
+
+    function startEditCountdown(index) {
+      renderCountdowns(index);
+    }
+
+    function saveEditCountdown(index, name, dateStr) {
+      if (!name.trim() || !dateStr) {
+        return;
+      }
+      countdowns[index] = { name: name.trim(), date: dateStr };
+      saveCountdowns();
+      renderCountdowns();
+    }
+
+    function renderCountdowns(editIndex) {
       const container = document.getElementById("countdownDaysList");
       container.replaceChildren();
 
@@ -1182,6 +1264,40 @@
       now.setHours(0, 0, 0, 0);
 
       countdowns.forEach((item, index) => {
+        if (editIndex === index) {
+          const formEl = document.createElement("div");
+          formEl.className = "countdown-edit-form";
+
+          const nameInput = document.createElement("input");
+          nameInput.type = "text";
+          nameInput.value = item.name;
+
+          const dateInput = document.createElement("input");
+          dateInput.type = "date";
+          dateInput.value = item.date;
+
+          const saveBtn = document.createElement("button");
+          saveBtn.className = "save-btn";
+          saveBtn.textContent = "保存";
+          saveBtn.addEventListener("click", function () {
+            saveEditCountdown(index, nameInput.value, dateInput.value);
+          });
+
+          const cancelBtn = document.createElement("button");
+          cancelBtn.className = "cancel-btn";
+          cancelBtn.textContent = "取消";
+          cancelBtn.addEventListener("click", function () {
+            renderCountdowns();
+          });
+
+          formEl.appendChild(nameInput);
+          formEl.appendChild(dateInput);
+          formEl.appendChild(saveBtn);
+          formEl.appendChild(cancelBtn);
+          container.appendChild(formEl);
+          return;
+        }
+
         const targetDate = new Date(item.date);
         targetDate.setHours(0, 0, 0, 0);
 
@@ -1212,6 +1328,13 @@
         const day = String(targetDate.getDate()).padStart(2, "0");
         dateEl.textContent = month + "-" + day;
 
+        const editBtn = document.createElement("button");
+        editBtn.className = "edit-countdown-btn";
+        editBtn.textContent = "编辑";
+        editBtn.addEventListener("click", function () {
+          startEditCountdown(index);
+        });
+
         const deleteBtn = document.createElement("button");
         deleteBtn.className = "delete-countdown-btn";
         deleteBtn.textContent = "删除";
@@ -1222,6 +1345,7 @@
         itemEl.appendChild(nameEl);
         itemEl.appendChild(daysEl);
         itemEl.appendChild(dateEl);
+        itemEl.appendChild(editBtn);
         itemEl.appendChild(deleteBtn);
 
         container.appendChild(itemEl);
