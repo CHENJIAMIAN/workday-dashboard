@@ -1688,6 +1688,10 @@
     }
 
     function exportToGoogleDrive(clientId) {
+      if (typeof google === "undefined" || !google.accounts) {
+        alert("Google API 尚未加载完成，请稍后重试");
+        return;
+      }
       const SCOPES = "https://www.googleapis.com/auth/drive.file";
       const data = {
         unitMinutes: loadStoredUnitMinutes(),
@@ -1745,13 +1749,17 @@
     document.getElementById("importGDriveBtn").addEventListener("click", function () {
       const storedClientId = window.localStorage.getItem(GDRIVE_CLIENT_ID_KEY);
       if (!storedClientId) {
-        alert("请先点击"导出到Google Drive"按钮配置 Client ID");
+        alert("请先点击\"导出到Google Drive\"按钮配置 Client ID");
         return;
       }
       importFromGoogleDrive(storedClientId);
     });
 
     function importFromGoogleDrive(clientId) {
+      if (typeof google === "undefined" || !google.accounts) {
+        alert("Google API 尚未加载完成，请稍后重试");
+        return;
+      }
       const SCOPES = "https://www.googleapis.com/auth/drive.readonly";
 
       const tokenClient = google.accounts.oauth2.initTokenClient({
