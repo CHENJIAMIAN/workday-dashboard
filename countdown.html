@@ -495,9 +495,16 @@
     }
 
     .countdown-days-section {
-      margin-top: 16px;
-      padding-top: 16px;
-      border-top: 2px dashed rgba(119, 95, 75, 0.2);
+      margin-top: 4px;
+    }
+
+    .countdown-days-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px 16px;
+      justify-content: center;
+      margin-top: 4px;
+      margin-bottom: 8px;
     }
 
     .countdown-days-header {
@@ -685,6 +692,9 @@
       <main class="card">
         <p class="age-label" id="ageLabel">当前年龄: --岁</p>
         <p class="years-left-label" id="yearsLeftLabel">距离45岁还剩 --年</p>
+        <div class="countdown-days-section">
+          <div class="countdown-days-list" id="countdownDaysList"></div>
+        </div>
         <p class="equivalent-date-label" id="equivalentDateLabel">相当于 --年--月--日</p>
         <p class="date-label" id="dateLabel">今天是 2026-03-25</p>
         <p class="weekday" id="weekdayLabel">周一</p>
@@ -726,15 +736,12 @@
         <div class="unassigned-dots-container" id="unassignedDotsContainer"></div>
       </div>
     </div>
-    <div class="countdown-days-section">
+    <div class="data-section">
       <div class="countdown-days-header">
         <input id="countdownNameInput" type="text" placeholder="名称">
         <input id="countdownDateInput" type="date">
         <button class="add-countdown-btn" id="addCountdownBtn">添加</button>
       </div>
-      <div class="countdown-days-list" id="countdownDaysList"></div>
-    </div>
-    <div class="data-section">
       <div class="data-buttons">
         <button class="data-btn" id="exportBtn">导出数据</button>
         <button class="data-btn import-btn" id="importBtn">导入数据</button>
