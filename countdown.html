@@ -1630,9 +1630,15 @@
 
       modal.innerHTML = `
         <h3>导出到 Google Drive</h3>
-        <p>${storedClientId ? "点击确认将数据导出到您的 Google Drive" : "请输入您的 Google API Client ID 以启用导出功能"}</p>
-        ${!storedClientId ? '<input id="gdriveClientIdInput" type="text" placeholder="Google API Client ID">' : ""}
+        <p style="text-align:left;font-size:12px;line-height:1.6;margin-bottom:12px;">
+          请先在 <a href="https://console.cloud.google.com/apis/credentials" target="_blank" style="color:#4285f4;">Google Cloud Console</a> 创建 OAuth 2.0 客户端 ID：<br>
+          1. 应用类型选择 <b>Web 应用</b><br>
+          2. 在"已获授权的 JavaScript 来源"中添加当前网址<br>
+          3. 复制客户端 ID 粘贴到下方
+        </p>
+        ${!storedClientId ? '<input id="gdriveClientIdInput" type="text" placeholder="例如: 123456-xxx.apps.googleusercontent.com">' : ""}
         <div class="gdrive-modal-buttons">
+          ${storedClientId ? '<button class="gdrive-modal-btn cancel-btn" id="gdriveResetBtn" style="background:#d14b38;color:#fff;">重置ID</button>' : ""}
           <button class="gdrive-modal-btn cancel-btn" id="gdriveCancelBtn">取消</button>
           <button class="gdrive-modal-btn confirm-btn" id="gdriveConfirmBtn">${storedClientId ? "确认导出" : "保存并授权"}</button>
         </div>
@@ -1650,6 +1656,15 @@
           document.body.removeChild(overlay);
         }
       });
+
+      const resetBtn = document.getElementById("gdriveResetBtn");
+      if (resetBtn) {
+        resetBtn.addEventListener("click", function () {
+          window.localStorage.removeItem(GDRIVE_CLIENT_ID_KEY);
+          document.body.removeChild(overlay);
+          showGDriveModal(null);
+        });
+      }
 
       document.getElementById("gdriveConfirmBtn").addEventListener("click", function () {
         let clientId = storedClientId;
