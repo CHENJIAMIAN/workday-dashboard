@@ -1631,10 +1631,11 @@
       modal.innerHTML = `
         <h3>导出到 Google Drive</h3>
         <p style="text-align:left;font-size:12px;line-height:1.6;margin-bottom:12px;">
-          请先在 <a href="https://console.cloud.google.com/apis/credentials" target="_blank" style="color:#4285f4;">Google Cloud Console</a> 创建 OAuth 2.0 客户端 ID：<br>
-          1. 应用类型选择 <b>Web 应用</b><br>
-          2. 在"已获授权的 JavaScript 来源"中添加当前网址<br>
-          3. 复制客户端 ID 粘贴到下方
+          请先在 <a href="https://console.cloud.google.com/apis/credentials" target="_blank" style="color:#4285f4;">Google Cloud Console</a> 完成以下设置：<br>
+          1. 启用 <a href="https://console.developers.google.com/apis/api/drive.googleapis.com/overview" target="_blank" style="color:#4285f4;">Google Drive API</a><br>
+          2. 创建 OAuth 2.0 客户端 ID，类型选 <b>Web 应用</b><br>
+          3. 在"已获授权的 JavaScript 来源"添加 <code style="font-size:11px;">https://chenjiamian.github.io</code><br>
+          4. 复制客户端 ID 粘贴到下方
         </p>
         ${!storedClientId ? '<input id="gdriveClientIdInput" type="text" placeholder="例如: 123456-xxx.apps.googleusercontent.com">' : ""}
         <div class="gdrive-modal-buttons">
