@@ -748,6 +748,10 @@
       background: #3367d6;
     }
 
+    .gdrive-file-item:hover {
+      background: rgba(214, 106, 42, 0.08) !important;
+    }
+
     .gdrive-modal-overlay {
       position: fixed;
       top: 0;
@@ -882,6 +886,7 @@
         <button class="data-btn" id="exportBtn">导出数据</button>
         <button class="data-btn google-drive-btn" id="exportGDriveBtn">导出到Google Drive</button>
         <button class="data-btn import-btn" id="importBtn">导入数据</button>
+        <button class="data-btn google-drive-btn" id="importGDriveBtn">从Google Drive导入</button>
         <input type="file" id="importInput" class="import-input" accept=".json">
       </div>
     </div>
@@ -1734,6 +1739,119 @@
         })
         .catch(function (e) {
           alert("导出失败: " + e.message);
+        });
+    }
+
+    document.getElementById("importGDriveBtn").addEventListener("click", function () {
+      const storedClientId = window.localStorage.getItem(GDRIVE_CLIENT_ID_KEY);
+      if (!storedClientId) {
+        alert("请先点击"导出到Google Drive"按钮配置 Client ID");
+        return;
+      }
+      importFromGoogleDrive(storedClientId);
+    });
+
+    function importFromGoogleDrive(clientId) {
+      const SCOPES = "https://www.googleapis.com/auth/drive.readonly";
+
+      const tokenClient = google.accounts.oauth2.initTokenClient({
+        client_id: clientId,
+        scope: SCOPES,
+        callback: function (response) {
+          if (response.error) {
+            alert("授权失败: " + response.error);
+            return;
+          }
+          listDriveFiles(response.access_token);
+        }
+      });
+
+      tokenClient.requestAccessToken();
+    }
+
+    function listDriveFiles(accessToken) {
+      const query = "name contains 'workday-dashboard-backup' and mimeType = 'application/json'";
+      fetch("https://www.googleapis.com/drive/v3/files?q=" + encodeURIComponent(query) + "&orderBy=createdTime desc&pageSize=10&fields=files(id,name,createdTime)", {
+        method: "GET",
+        headers: new Headers({ Authorization: "Bearer " + accessToken })
+      })
+        .then(function (res) { return res.json(); })
+        .then(function (data) {
+          if (!data.files || data.files.length === 0) {
+            alert("未找到备份文件");
+            return;
+          }
+          showFilePickerModal(data.files, accessToken);
+        })
+        .catch(function (e) {
+          alert("获取文件列表失败: " + e.message);
+        });
+    }
+
+    function showFilePickerModal(files, accessToken) {
+      const overlay = document.createElement("div");
+      overlay.className = "gdrive-modal-overlay";
+
+      const modal = document.createElement("div");
+      modal.className = "gdrive-modal";
+
+      let fileListHTML = '<div style="text-align:left;max-height:300px;overflow-y:auto;margin-bottom:12px;">';
+      files.forEach(function (f) {
+        const date = new Date(f.createdTime).toLocaleString("zh-CN");
+        fileListHTML += '<div class="gdrive-file-item" data-file-id="' + f.id + '" style="padding:8px;border:1px solid rgba(119,95,75,0.15);border-radius:8px;margin-bottom:6px;cursor:pointer;transition:background 0.2s;">' +
+          '<div style="font-size:13px;font-weight:600;color:var(--text);">' + f.name + '</div>' +
+          '<div style="font-size:11px;color:var(--muted);margin-top:2px;">' + date + '</div>' +
+          '</div>';
+      });
+      fileListHTML += '</div>';
+
+      modal.innerHTML = `
+        <h3>选择要导入的文件</h3>
+        ${fileListHTML}
+        <div class="gdrive-modal-buttons">
+          <button class="gdrive-modal-btn cancel-btn" id="gdriveCancelBtn">取消</button>
+        </div>
+      `;
+
+      overlay.appendChild(modal);
+      document.body.appendChild(overlay);
+
+      document.getElementById("gdriveCancelBtn").addEventListener("click", function () {
+        document.body.removeChild(overlay);
+      });
+
+      overlay.addEventListener("click", function (e) {
+        if (e.target === overlay) {
+          document.body.removeChild(overlay);
+        }
+      });
+
+      modal.querySelectorAll(".gdrive-file-item").forEach(function (item) {
+        item.addEventListener("click", function () {
+          const fileId = this.dataset.fileId;
+          document.body.removeChild(overlay);
+          downloadFileFromDrive(accessToken, fileId);
+        });
+        item.addEventListener("mouseenter", function () {
+          this.style.background = "rgba(214,106,42,0.08)";
+        });
+        item.addEventListener("mouseleave", function () {
+          this.style.background = "transparent";
+        });
+      });
+    }
+
+    function downloadFileFromDrive(accessToken, fileId) {
+      fetch("https://www.googleapis.com/drive/v3/files/" + fileId + "?alt=media", {
+        method: "GET",
+        headers: new Headers({ Authorization: "Bearer " + accessToken })
+      })
+        .then(function (res) { return res.text(); })
+        .then(function (content) {
+          importData(content);
+        })
+        .catch(function (e) {
+          alert("下载文件失败: " + e.message);
         });
     }
 
