@@ -1401,12 +1401,25 @@
         const daysEl = document.createElement("div");
         daysEl.className = "countdown-item-days";
         if (diffDays > 0) {
-          daysEl.textContent = "还剩 " + diffDays + " 天";
+          const years = Math.floor(diffDays / 365);
+          const remainingDays = diffDays % 365;
+          if (years > 0) {
+            daysEl.textContent = "还剩 " + years + "年" + remainingDays + "天";
+          } else {
+            daysEl.textContent = "还剩 " + diffDays + " 天";
+          }
         } else if (diffDays === 0) {
           daysEl.textContent = "就是今天!";
         } else {
           daysEl.classList.add("past");
-          daysEl.textContent = "已过 " + Math.abs(diffDays) + " 天";
+          const absDays = Math.abs(diffDays);
+          const years = Math.floor(absDays / 365);
+          const remainingDays = absDays % 365;
+          if (years > 0) {
+            daysEl.textContent = "已过 " + years + "年" + remainingDays + "天";
+          } else {
+            daysEl.textContent = "已过 " + absDays + " 天";
+          }
         }
 
         const dateEl = document.createElement("div");
