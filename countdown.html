@@ -5,17 +5,91 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>下班倒计时</title>
   <script src="https://accounts.google.com/gsi/client" async defer></script>
+  <script>
+    (function () {
+      const themeKey = "workday-dashboard-theme";
+      const systemPrefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+      const storedTheme = window.localStorage.getItem(themeKey);
+      const theme = storedTheme === "dark" || storedTheme === "light" ? storedTheme : (systemPrefersDark ? "dark" : "light");
+      document.documentElement.dataset.theme = theme;
+    }());
+  </script>
   <style>
     :root {
       color-scheme: light;
       --bg-top: #fff7e8;
       --bg-bottom: #ffe0b5;
+      --page-glow: rgba(255, 255, 255, 0.8);
       --card: rgba(255, 250, 242, 0.88);
       --text: #2d2118;
       --muted: #775f4b;
       --accent: #d66a2a;
       --accent-soft: rgba(214, 106, 42, 0.12);
+      --field-bg: rgba(255, 255, 255, 0.95);
+      --field-border: rgba(119, 95, 75, 0.25);
+      --surface: rgba(255, 255, 255, 0.56);
+      --surface-strong: rgba(255, 255, 255, 0.7);
+      --surface-soft: rgba(255, 255, 255, 0.5);
+      --divider: rgba(119, 95, 75, 0.2);
+      --chip-bg: rgba(45, 33, 24, 0.06);
+      --chip-border: rgba(45, 33, 24, 0.08);
+      --progress-track: rgba(45, 33, 24, 0.1);
+      --clock-inner: rgba(255, 255, 255, 0.95);
+      --clock-outer: rgba(249, 230, 209, 0.95);
+      --clock-ring: rgba(255, 255, 255, 0.85);
+      --clock-number: #6e4529;
+      --tick: rgba(45, 33, 24, 0.45);
+      --hand-hour: #5a3a26;
+      --hand-minute: #7a4a2c;
+      --hand-second: #d14b38;
+      --danger: #d14b38;
+      --danger-hover: #b8392a;
+      --success: #5a8a3d;
+      --success-hover: #4a7534;
+      --info: #3d6a8a;
+      --info-hover: #2d5a7a;
+      --google: #4285f4;
+      --google-hover: #3367d6;
+      --button-text: #fff;
       --shadow: 0 24px 60px rgba(126, 79, 36, 0.18);
+    }
+
+    [data-theme="dark"] {
+      color-scheme: dark;
+      --bg-top: #10151f;
+      --bg-bottom: #25202a;
+      --page-glow: rgba(255, 154, 87, 0.14);
+      --card: rgba(21, 27, 38, 0.92);
+      --text: #f5efe7;
+      --muted: #c5b6a3;
+      --accent: #ff9a57;
+      --accent-soft: rgba(255, 154, 87, 0.18);
+      --field-bg: rgba(10, 14, 22, 0.86);
+      --field-border: rgba(235, 206, 174, 0.24);
+      --surface: rgba(255, 255, 255, 0.08);
+      --surface-strong: rgba(255, 255, 255, 0.1);
+      --surface-soft: rgba(255, 255, 255, 0.06);
+      --divider: rgba(235, 206, 174, 0.2);
+      --chip-bg: rgba(255, 255, 255, 0.08);
+      --chip-border: rgba(255, 255, 255, 0.1);
+      --progress-track: rgba(255, 255, 255, 0.12);
+      --clock-inner: rgba(23, 30, 42, 0.96);
+      --clock-outer: rgba(45, 38, 48, 0.96);
+      --clock-ring: rgba(255, 255, 255, 0.1);
+      --clock-number: #f4d4b7;
+      --tick: rgba(245, 239, 231, 0.5);
+      --hand-hour: #f5efe7;
+      --hand-minute: #ffbd8b;
+      --hand-second: #ff6b5f;
+      --danger: #e15d52;
+      --danger-hover: #c9483f;
+      --success: #73a653;
+      --success-hover: #638f47;
+      --info: #5b8fb1;
+      --info-hover: #477b9d;
+      --google: #6fa0ff;
+      --google-hover: #578cf0;
+      --shadow: 0 24px 60px rgba(0, 0, 0, 0.38);
     }
 
     * {
@@ -29,9 +103,33 @@
       place-items: center;
       font-family: "Microsoft YaHei", "PingFang SC", sans-serif;
       background:
-        radial-gradient(circle at top left, rgba(255, 255, 255, 0.8), transparent 32%),
+        radial-gradient(circle at top left, var(--page-glow), transparent 32%),
         linear-gradient(160deg, var(--bg-top), var(--bg-bottom));
       color: var(--text);
+    }
+
+    .theme-toggle {
+      position: fixed;
+      top: 18px;
+      right: 18px;
+      z-index: 10;
+      min-width: 44px;
+      height: 44px;
+      padding: 0 14px;
+      border: 1px solid var(--field-border);
+      border-radius: 999px;
+      background: var(--card);
+      color: var(--text);
+      box-shadow: 0 10px 24px rgba(0, 0, 0, 0.12);
+      cursor: pointer;
+      font-size: 15px;
+      font-weight: 800;
+      line-height: 1;
+    }
+
+    .theme-toggle:hover {
+      border-color: var(--accent);
+      color: var(--accent);
     }
 
     .card {
@@ -73,11 +171,11 @@
     .birth-input {
       margin: 16px auto 0;
       padding: 10px 12px;
-      border: 1px solid rgba(119, 95, 75, 0.25);
+      border: 1px solid var(--field-border);
       border-radius: 12px;
       font-size: 16px;
       color: var(--text);
-      background: rgba(255, 255, 255, 0.95);
+      background: var(--field-bg);
       width: 200px;
       max-width: 90%;
     }
@@ -105,8 +203,8 @@
       display: inline-block;
       padding: 8px 16px;
       border-radius: 999px;
-      background: rgba(45, 33, 24, 0.06);
-      box-shadow: inset 0 0 0 1px rgba(45, 33, 24, 0.08);
+      background: var(--chip-bg);
+      box-shadow: inset 0 0 0 1px var(--chip-border);
       font-size: 22px;
       font-weight: 800;
       letter-spacing: 0.04em;
@@ -131,8 +229,8 @@
       height: 10px;
       border-radius: 999px;
       overflow: hidden;
-      background: rgba(45, 33, 24, 0.1);
-      box-shadow: inset 0 0 0 1px rgba(45, 33, 24, 0.05);
+      background: var(--progress-track);
+      box-shadow: inset 0 0 0 1px var(--chip-border);
     }
 
     .year-progress-fill {
@@ -150,9 +248,9 @@
       border-radius: 50%;
       position: relative;
       background:
-        radial-gradient(circle at center, rgba(255, 255, 255, 0.95) 0 54%, rgba(249, 230, 209, 0.95) 55% 100%);
+        radial-gradient(circle at center, var(--clock-inner) 0 54%, var(--clock-outer) 55% 100%);
       box-shadow:
-        inset 0 0 0 8px rgba(255, 255, 255, 0.85),
+        inset 0 0 0 8px var(--clock-ring),
         inset 0 0 0 16px rgba(214, 106, 42, 0.08),
         0 18px 38px rgba(126, 79, 36, 0.18);
     }
@@ -175,7 +273,7 @@
       place-items: center;
       font-size: 22px;
       font-weight: 800;
-      color: #6e4529;
+      color: var(--clock-number);
       transform: translate(var(--number-x), var(--number-y));
     }
 
@@ -188,7 +286,7 @@
       margin-left: -2px;
       margin-top: -115px;
       border-radius: 999px;
-      background: rgba(45, 33, 24, 0.45);
+      background: var(--tick);
       transform-origin: center 115px;
     }
 
@@ -211,21 +309,21 @@
       width: 8px;
       height: 62px;
       margin-left: -4px;
-      background: #5a3a26;
+      background: var(--hand-hour);
     }
 
     .hand.minute {
       width: 6px;
       height: 88px;
       margin-left: -3px;
-      background: #7a4a2c;
+      background: var(--hand-minute);
     }
 
     .hand.second {
       width: 3px;
       height: 96px;
       margin-left: -1.5px;
-      background: #d14b38;
+      background: var(--hand-second);
     }
 
     .clock-center {
@@ -248,7 +346,7 @@
       gap: 12px;
       padding: 12px 16px;
       border-radius: 16px;
-      background: rgba(255, 255, 255, 0.56);
+      background: var(--surface);
     }
 
     .controls label {
@@ -259,12 +357,12 @@
     .controls input {
       width: 96px;
       padding: 10px 12px;
-      border: 1px solid rgba(119, 95, 75, 0.25);
+      border: 1px solid var(--field-border);
       border-radius: 12px;
       font-size: 18px;
       font-weight: 700;
       color: var(--text);
-      background: rgba(255, 255, 255, 0.95);
+      background: var(--field-bg);
     }
 
     .controls input:focus {
@@ -334,7 +432,7 @@
     .zone-section {
       margin-top: 24px;
       padding-top: 24px;
-      border-top: 2px dashed rgba(119, 95, 75, 0.2);
+      border-top: 2px dashed var(--divider);
     }
 
     .zone-header {
@@ -348,11 +446,11 @@
     .zone-header input {
       width: 140px;
       padding: 8px 12px;
-      border: 1px solid rgba(119, 95, 75, 0.25);
+      border: 1px solid var(--field-border);
       border-radius: 10px;
       font-size: 15px;
       color: var(--text);
-      background: rgba(255, 255, 255, 0.95);
+      background: var(--field-bg);
     }
 
     .zone-header input:focus {
@@ -366,7 +464,7 @@
       border-radius: 10px;
       font-size: 15px;
       font-weight: 600;
-      color: #fff;
+      color: var(--button-text);
       background: var(--accent);
       cursor: pointer;
     }
@@ -385,8 +483,8 @@
     .zone {
       padding: 12px 16px;
       border-radius: 12px;
-      background: rgba(255, 255, 255, 0.7);
-      border: 2px solid rgba(119, 95, 75, 0.15);
+      background: var(--surface-strong);
+      border: 2px solid var(--divider);
       min-width: 100px;
       text-align: center;
       transition: all 0.2s ease;
@@ -439,8 +537,8 @@
       margin-top: 16px;
       padding: 16px;
       border-radius: 12px;
-      background: rgba(255, 255, 255, 0.5);
-      border: 2px dashed rgba(119, 95, 75, 0.2);
+      background: var(--surface-soft);
+      border: 2px dashed var(--divider);
       transition: all 0.2s ease;
     }
 
@@ -486,13 +584,13 @@
       border: none;
       border-radius: 6px;
       font-size: 12px;
-      color: #fff;
-      background: #d14b38;
+      color: var(--button-text);
+      background: var(--danger);
       cursor: pointer;
     }
 
     .delete-zone-btn:hover {
-      background: #b8392a;
+      background: var(--danger-hover);
     }
 
     .countdown-days-section {
@@ -519,20 +617,20 @@
     .countdown-days-header input[type="text"] {
       width: 100px;
       padding: 6px 10px;
-      border: 1px solid rgba(119, 95, 75, 0.25);
+      border: 1px solid var(--field-border);
       border-radius: 8px;
       font-size: 14px;
       color: var(--text);
-      background: rgba(255, 255, 255, 0.95);
+      background: var(--field-bg);
     }
 
     .countdown-days-header input[type="date"] {
       padding: 6px 10px;
-      border: 1px solid rgba(119, 95, 75, 0.25);
+      border: 1px solid var(--field-border);
       border-radius: 8px;
       font-size: 14px;
       color: var(--text);
-      background: rgba(255, 255, 255, 0.95);
+      background: var(--field-bg);
     }
 
     .countdown-days-header input:focus {
@@ -546,7 +644,7 @@
       border-radius: 8px;
       font-size: 14px;
       font-weight: 600;
-      color: #fff;
+      color: var(--button-text);
       background: var(--accent);
       cursor: pointer;
     }
@@ -598,13 +696,13 @@
       border: none;
       border-radius: 4px;
       font-size: 11px;
-      color: #fff;
-      background: #d14b38;
+      color: var(--button-text);
+      background: var(--danger);
       cursor: pointer;
     }
 
     .delete-countdown-btn:hover {
-      background: #b8392a;
+      background: var(--danger-hover);
     }
 
     .edit-countdown-btn {
@@ -612,13 +710,13 @@
       border: none;
       border-radius: 4px;
       font-size: 11px;
-      color: #fff;
-      background: #3d6a8a;
+      color: var(--button-text);
+      background: var(--info);
       cursor: pointer;
     }
 
     .edit-countdown-btn:hover {
-      background: #2d5a7a;
+      background: var(--info-hover);
     }
 
     .countdown-edit-form {
@@ -630,20 +728,20 @@
     .countdown-edit-form input[type="text"] {
       width: 60px;
       padding: 2px 6px;
-      border: 1px solid rgba(119, 95, 75, 0.25);
+      border: 1px solid var(--field-border);
       border-radius: 4px;
       font-size: 12px;
       color: var(--text);
-      background: rgba(255, 255, 255, 0.95);
+      background: var(--field-bg);
     }
 
     .countdown-edit-form input[type="date"] {
       padding: 2px 6px;
-      border: 1px solid rgba(119, 95, 75, 0.25);
+      border: 1px solid var(--field-border);
       border-radius: 4px;
       font-size: 12px;
       color: var(--text);
-      background: rgba(255, 255, 255, 0.95);
+      background: var(--field-bg);
     }
 
     .countdown-edit-form button {
@@ -651,16 +749,16 @@
       border: none;
       border-radius: 4px;
       font-size: 11px;
-      color: #fff;
+      color: var(--button-text);
       cursor: pointer;
     }
 
     .countdown-edit-form .save-btn {
-      background: #5a8a3d;
+      background: var(--success);
     }
 
     .countdown-edit-form .cancel-btn {
-      background: #8a6a3d;
+      background: var(--muted);
     }
 
     .countdown-item {
@@ -697,19 +795,19 @@
       border: none;
       border-radius: 4px;
       font-size: 11px;
-      color: #fff;
-      background: #d14b38;
+      color: var(--button-text);
+      background: var(--danger);
       cursor: pointer;
     }
 
     .delete-countdown-btn:hover {
-      background: #b8392a;
+      background: var(--danger-hover);
     }
 
     .data-section {
       margin-top: 16px;
       padding-top: 16px;
-      border-top: 2px dashed rgba(119, 95, 75, 0.2);
+      border-top: 2px dashed var(--divider);
     }
 
     .data-buttons {
@@ -724,29 +822,29 @@
       border-radius: 8px;
       font-size: 14px;
       font-weight: 600;
-      color: #fff;
-      background: #5a8a3d;
+      color: var(--button-text);
+      background: var(--success);
       cursor: pointer;
     }
 
     .data-btn:hover {
-      background: #4a7534;
+      background: var(--success-hover);
     }
 
     .data-btn.import-btn {
-      background: #3d6a8a;
+      background: var(--info);
     }
 
     .data-btn.import-btn:hover {
-      background: #2d5a7a;
+      background: var(--info-hover);
     }
 
     .data-btn.google-drive-btn {
-      background: #4285f4;
+      background: var(--google);
     }
 
     .data-btn.google-drive-btn:hover {
-      background: #3367d6;
+      background: var(--google-hover);
     }
 
     .gdrive-file-item:hover {
@@ -790,11 +888,11 @@
     .gdrive-modal input {
       width: 100%;
       padding: 8px 12px;
-      border: 1px solid rgba(119, 95, 75, 0.25);
+      border: 1px solid var(--field-border);
       border-radius: 8px;
       font-size: 14px;
       color: var(--text);
-      background: rgba(255, 255, 255, 0.95);
+      background: var(--field-bg);
       margin-bottom: 12px;
       box-sizing: border-box;
     }
@@ -815,13 +913,13 @@
     }
 
     .gdrive-modal-btn.confirm-btn {
-      color: #fff;
-      background: #4285f4;
+      color: var(--button-text);
+      background: var(--google);
     }
 
     .gdrive-modal-btn.cancel-btn {
       color: var(--text);
-      background: rgba(119, 95, 75, 0.15);
+      background: var(--surface);
     }
 
     .import-input {
@@ -830,6 +928,7 @@
   </style>
 </head>
     <body>
+      <button class="theme-toggle" id="themeToggle" type="button" aria-pressed="false" aria-label="切换暗黑模式">暗色</button>
       <main class="card">
         <p class="age-label" id="ageLabel">当前年龄: --岁</p>
         <p class="years-left-label" id="yearsLeftLabel">距离45岁还剩 --年</p>
@@ -894,6 +993,7 @@
   </main>
 
   <script>
+    const THEME_STORAGE_KEY = "workday-dashboard-theme";
     const STORAGE_KEY = "countdown-unit-minutes";
     const BIRTH_STORAGE_KEY = "countdown-birthdate";
     const ZONES_STORAGE_KEY = "countdown-zones";
@@ -903,6 +1003,36 @@
     let countdowns = [];
     let draggedDot = null;
     let draggedFromZone = null;
+
+    function getPreferredTheme() {
+      const systemPrefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+      const storedTheme = window.localStorage.getItem(THEME_STORAGE_KEY);
+      if (storedTheme === "dark" || storedTheme === "light") {
+        return storedTheme;
+      }
+      return systemPrefersDark ? "dark" : "light";
+    }
+
+    function applyTheme(theme) {
+      const normalizedTheme = theme === "dark" ? "dark" : "light";
+      const isDark = normalizedTheme === "dark";
+      document.documentElement.dataset.theme = normalizedTheme;
+      const themeToggle = document.getElementById("themeToggle");
+      themeToggle.setAttribute("aria-pressed", String(isDark));
+      themeToggle.textContent = isDark ? "亮色" : "暗色";
+      themeToggle.setAttribute("aria-label", isDark ? "切换亮色模式" : "切换暗黑模式");
+    }
+
+    function saveTheme(theme) {
+      window.localStorage.setItem(THEME_STORAGE_KEY, theme);
+    }
+
+    function toggleTheme() {
+      const currentTheme = document.documentElement.dataset.theme === "dark" ? "dark" : "light";
+      const nextTheme = currentTheme === "dark" ? "light" : "dark";
+      applyTheme(nextTheme);
+      saveTheme(nextTheme);
+    }
 
     function formatTime(date) {
       return date.toLocaleTimeString("zh-CN", { hour12: false });
@@ -1527,6 +1657,8 @@
       renderZones();
     }
 
+    applyTheme(getPreferredTheme());
+    document.getElementById("themeToggle").addEventListener("click", toggleTheme);
     buildClockTicks();
     document.getElementById("unitInput").value = String(loadStoredUnitMinutes());
     // Load and set birth date if available
