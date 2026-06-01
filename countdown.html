@@ -973,8 +973,8 @@
         <section class="section-card personal-card" data-card-id="personal" draggable="true" aria-labelledby="personalSectionTitle">
           <h2 class="section-title" id="personalSectionTitle">个人概览</h2>
         <p class="age-label" id="ageLabel">当前年龄: --岁</p>
-        <p class="years-left-label" id="yearsLeftLabel">距离45岁还剩 --年</p>
-        <p class="equivalent-date-label" id="equivalentDateLabel">相当于 --年--月--日</p>
+        <p class="years-left-label" id="yearsLeft35Label">距离35岁还剩 --年（相当于 --年--月--日）</p>
+        <p class="years-left-label" id="yearsLeft45Label">距离45岁还剩 --年（相当于 --年--月--日）</p>
           <div>
             <label for="birthInput" class="eyebrow">出生日期</label>
             <input id="birthInput" type="date" class="birth-input">
@@ -1344,6 +1344,26 @@
         return 0;
       }
       return targetAge - currentAge;
+    }
+
+    function formatEquivalentDate(yearsLeft, now) {
+      const equivalentDate = new Date(now);
+      equivalentDate.setFullYear(equivalentDate.getFullYear() - Math.floor(yearsLeft));
+      equivalentDate.setMonth(now.getMonth());
+      equivalentDate.setDate(now.getDate());
+
+      const eqYear = equivalentDate.getFullYear();
+      const eqMonth = String(equivalentDate.getMonth() + 1).padStart(2, "0");
+      const eqDay = String(equivalentDate.getDate()).padStart(2, "0");
+      return eqYear + "年" + eqMonth + "月" + eqDay + "日";
+    }
+
+    function formatYearsLeftLabel(targetAge, birthDate, now) {
+      const yearsLeft = yearsUntilTarget(birthDate, targetAge, now);
+      if (yearsLeft <= 0) {
+        return "已达到或超过" + targetAge + "岁";
+      }
+      return "距离" + targetAge + "岁还剩 " + yearsLeft.toFixed(1) + "年（相当于 " + formatEquivalentDate(yearsLeft, now) + "）";
     }
 
     function loadZones() {
@@ -1773,7 +1793,8 @@
       const yearProgressText = document.getElementById("yearProgressText");
       const yearProgressFill = document.getElementById("yearProgressFill");
       const ageLabel = document.getElementById("ageLabel");
-      const yearsLeftLabel = document.getElementById("yearsLeftLabel");
+      const yearsLeft35Label = document.getElementById("yearsLeft35Label");
+      const yearsLeft45Label = document.getElementById("yearsLeft45Label");
       const unitMinutes = getUnitMinutes();
       const yearProgress = getYearProgress(now);
       const birthDate = loadStoredBirthDate() || getBirthDate();
@@ -1785,32 +1806,15 @@
       clockLabel.textContent = "当前时间：" + formatTime(now);
       updateClockHands(now);
 
-       // Update age information
        if (birthDate) {
          const ageYears = calculateAge(birthDate, now);
          ageLabel.textContent = "当前年龄: " + formatAge(ageYears) + "岁";
-         const yearsLeft = yearsUntilTarget(birthDate, 45, now);
-         if (yearsLeft > 0) {
-           yearsLeftLabel.textContent = "距离45岁还剩 " + yearsLeft.toFixed(1) + "年";
-           
-           // Calculate equivalent date
-           const equivalentDate = new Date(now);
-           equivalentDate.setFullYear(equivalentDate.getFullYear() - Math.floor(yearsLeft));
-           equivalentDate.setMonth(now.getMonth());
-           equivalentDate.setDate(now.getDate());
-           
-           const eqYear = equivalentDate.getFullYear();
-           const eqMonth = String(equivalentDate.getMonth() + 1).padStart(2, "0");
-           const eqDay = String(equivalentDate.getDate()).padStart(2, "0");
-           document.getElementById("equivalentDateLabel").textContent = "相当于 " + eqYear + "年" + eqMonth + "月" + eqDay + "日";
-         } else {
-           yearsLeftLabel.textContent = "已达到或超过45岁";
-           document.getElementById("equivalentDateLabel").textContent = "";
-         }
+         yearsLeft35Label.textContent = formatYearsLeftLabel(35, birthDate, now);
+         yearsLeft45Label.textContent = formatYearsLeftLabel(45, birthDate, now);
        } else {
          ageLabel.textContent = "当前年龄: --岁";
-         yearsLeftLabel.textContent = "距离45岁还剩 --年";
-         document.getElementById("equivalentDateLabel").textContent = "";
+         yearsLeft35Label.textContent = "距离35岁还剩 --年（相当于 --年--月--日）";
+         yearsLeft45Label.textContent = "距离45岁还剩 --年（相当于 --年--月--日）";
        }
 
       if (!unitMinutes) {
