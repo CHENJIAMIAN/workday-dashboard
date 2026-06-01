@@ -3,6 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="下班倒计时和个人时间块看板，支持暗色模式、本地备份和 Google Drive 导入导出。">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='14' fill='%23a84917'/%3E%3Cpath d='M16 7v10l7 4' stroke='white' stroke-width='3' stroke-linecap='round' fill='none'/%3E%3C/svg%3E">
   <title>下班倒计时</title>
   <script src="https://accounts.google.com/gsi/client" async defer></script>
   <script>
@@ -23,7 +25,7 @@
       --card: rgba(255, 250, 242, 0.88);
       --text: #2d2118;
       --muted: #775f4b;
-      --accent: #d66a2a;
+      --accent: #a84917;
       --accent-soft: rgba(214, 106, 42, 0.12);
       --field-bg: rgba(255, 255, 255, 0.95);
       --field-border: rgba(119, 95, 75, 0.25);
@@ -44,12 +46,12 @@
       --hand-second: #d14b38;
       --danger: #d14b38;
       --danger-hover: #b8392a;
-      --success: #5a8a3d;
-      --success-hover: #4a7534;
+      --success: #4a7534;
+      --success-hover: #3f642d;
       --info: #3d6a8a;
       --info-hover: #2d5a7a;
-      --google: #4285f4;
-      --google-hover: #3367d6;
+      --google: #3367d6;
+      --google-hover: #2851a8;
       --button-text: #fff;
       --shadow: 0 24px 60px rgba(126, 79, 36, 0.18);
     }
@@ -89,6 +91,7 @@
       --info-hover: #477b9d;
       --google: #6fa0ff;
       --google-hover: #578cf0;
+      --button-text: #10151f;
       --shadow: 0 24px 60px rgba(0, 0, 0, 0.38);
     }
 
@@ -99,8 +102,7 @@
     body {
       margin: 0;
       min-height: 100vh;
-      display: grid;
-      place-items: center;
+      padding: 72px 0 32px;
       font-family: "Microsoft YaHei", "PingFang SC", sans-serif;
       background:
         radial-gradient(circle at top left, var(--page-glow), transparent 32%),
@@ -132,14 +134,65 @@
       color: var(--accent);
     }
 
-    .card {
-      width: min(92vw, 720px);
-      padding: 40px 28px;
-      border-radius: 28px;
+    .dashboard-shell {
+      width: min(94vw, 920px);
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 16px;
+    }
+
+    .section-card {
+      padding: 22px;
+      border: 1px solid var(--field-border);
+      border-radius: 8px;
       background: var(--card);
-      box-shadow: var(--shadow);
+      box-shadow: 0 14px 34px rgba(126, 79, 36, 0.12);
       backdrop-filter: blur(12px);
       text-align: center;
+      cursor: grab;
+      transition: border-color 0.2s ease, opacity 0.2s ease, transform 0.2s ease;
+    }
+
+    .section-card:active {
+      cursor: grabbing;
+    }
+
+    .section-card.dragging-card {
+      opacity: 0.55;
+      transform: scale(0.99);
+    }
+
+    .section-card.drag-over-card {
+      border-color: var(--accent);
+    }
+
+    .workday-card,
+    .zone-card,
+    .countdown-card,
+    .data-card {
+      grid-column: 1 / -1;
+    }
+
+    .section-title {
+      margin: 0 0 16px;
+      font-size: 17px;
+      font-weight: 800;
+      color: var(--text);
+    }
+
+    @media (max-width: 720px) {
+      body {
+        padding-top: 76px;
+      }
+
+      .dashboard-shell {
+        grid-template-columns: 1fr;
+      }
+
+      .section-card {
+        padding: 20px 14px;
+      }
     }
 
     .eyebrow {
@@ -387,10 +440,6 @@
     }
 
     @media (max-width: 520px) {
-      .card {
-        padding: 28px 16px;
-      }
-
       .count {
         padding: 18px 12px;
       }
@@ -429,12 +478,6 @@
       color: var(--muted);
     }
 
-    .zone-section {
-      margin-top: 24px;
-      padding-top: 24px;
-      border-top: 2px dashed var(--divider);
-    }
-
     .zone-header {
       display: flex;
       align-items: center;
@@ -470,7 +513,7 @@
     }
 
     .add-zone-btn:hover {
-      background: #c55a1f;
+      background: #8f3f12;
     }
 
     .zones-container {
@@ -594,16 +637,7 @@
     }
 
     .countdown-days-section {
-      margin-top: 4px;
-    }
-
-    .countdown-days-list {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 8px 16px;
-      justify-content: center;
-      margin-top: 4px;
-      margin-bottom: 8px;
+      margin: 0 0 16px;
     }
 
     .countdown-days-header {
@@ -650,7 +684,7 @@
     }
 
     .add-countdown-btn:hover {
-      background: #c55a1f;
+      background: #8f3f12;
     }
 
     .countdown-days-list {
@@ -658,7 +692,19 @@
       flex-direction: column;
       gap: 8px;
       justify-content: center;
-      margin-top: 12px;
+      margin-top: 0;
+    }
+
+    .sr-only {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+      border: 0;
     }
 
     .countdown-item {
@@ -761,59 +807,12 @@
       background: var(--muted);
     }
 
-    .countdown-item {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      font-size: 16px;
-      color: var(--muted);
-    }
-
-    .countdown-item-name {
-      font-size: 16px;
-      font-weight: 600;
-      color: var(--text);
-    }
-
-    .countdown-item-days {
-      font-size: 16px;
-      font-weight: 700;
-      color: var(--accent);
-    }
-
-    .countdown-item-days.past {
-      color: #7a9a3d;
-    }
-
-    .countdown-item-date {
-      font-size: 14px;
-      color: var(--muted);
-    }
-
-    .delete-countdown-btn {
-      padding: 2px 6px;
-      border: none;
-      border-radius: 4px;
-      font-size: 11px;
-      color: var(--button-text);
-      background: var(--danger);
-      cursor: pointer;
-    }
-
-    .delete-countdown-btn:hover {
-      background: var(--danger-hover);
-    }
-
-    .data-section {
-      margin-top: 16px;
-      padding-top: 16px;
-      border-top: 2px dashed var(--divider);
-    }
-
     .data-buttons {
       display: flex;
+      flex-wrap: wrap;
       gap: 12px;
       justify-content: center;
+      margin-top: 14px;
     }
 
     .data-btn {
@@ -849,6 +848,34 @@
 
     .gdrive-file-item:hover {
       background: rgba(214, 106, 42, 0.08) !important;
+    }
+
+    .gdrive-file-list {
+      max-height: 300px;
+      overflow-y: auto;
+      margin-bottom: 12px;
+      text-align: left;
+    }
+
+    .gdrive-file-item {
+      padding: 8px;
+      border: 1px solid rgba(119, 95, 75, 0.15);
+      border-radius: 8px;
+      margin-bottom: 6px;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    .gdrive-file-name {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text);
+    }
+
+    .gdrive-file-date {
+      margin-top: 2px;
+      font-size: 11px;
+      color: var(--muted);
     }
 
     .gdrive-modal-overlay {
@@ -929,13 +956,32 @@
 </head>
     <body>
       <button class="theme-toggle" id="themeToggle" type="button" aria-pressed="false" aria-label="切换暗黑模式">暗色</button>
-      <main class="card">
+      <main class="dashboard-shell">
+        <section class="section-card countdown-card" data-card-id="countdown" draggable="true" aria-labelledby="countdownSectionTitle">
+          <h2 class="section-title" id="countdownSectionTitle">倒计时事项</h2>
+      <div class="countdown-days-header">
+        <label for="countdownNameInput" class="sr-only">倒计时名称</label>
+        <input id="countdownNameInput" type="text" placeholder="名称">
+        <label for="countdownDateInput" class="sr-only">倒计时日期</label>
+        <input id="countdownDateInput" type="date">
+        <button class="add-countdown-btn" id="addCountdownBtn">添加</button>
+      </div>
+      <div class="countdown-days-section">
+        <div class="countdown-days-list" id="countdownDaysList"></div>
+      </div>
+        </section>
+        <section class="section-card personal-card" data-card-id="personal" draggable="true" aria-labelledby="personalSectionTitle">
+          <h2 class="section-title" id="personalSectionTitle">个人概览</h2>
         <p class="age-label" id="ageLabel">当前年龄: --岁</p>
         <p class="years-left-label" id="yearsLeftLabel">距离45岁还剩 --年</p>
-        <div class="countdown-days-section">
-          <div class="countdown-days-list" id="countdownDaysList"></div>
-        </div>
         <p class="equivalent-date-label" id="equivalentDateLabel">相当于 --年--月--日</p>
+          <div>
+            <label for="birthInput" class="eyebrow">出生日期</label>
+            <input id="birthInput" type="date" class="birth-input">
+          </div>
+        </section>
+        <section class="section-card today-card" data-card-id="today" draggable="true" aria-labelledby="todaySectionTitle">
+          <h2 class="section-title" id="todaySectionTitle">今日进度</h2>
         <p class="date-label" id="dateLabel">今天是 2026-03-25</p>
         <p class="weekday" id="weekdayLabel">周一</p>
     <div class="year-progress" aria-label="今年进度">
@@ -944,16 +990,19 @@
         <div class="year-progress-fill" id="yearProgressFill"></div>
       </div>
     </div>
-    <div class="clock-widget" aria-label="当前真实时间时钟">
+    <div class="clock-widget" role="img" aria-label="当前真实时间时钟">
       <div class="clock-face" id="clockFace"></div>
       <div class="hand hour" id="hourHand"></div>
       <div class="hand minute" id="minuteHand"></div>
       <div class="hand second" id="secondHand"></div>
       <div class="clock-center"></div>
     </div>
+        </section>
+        <section class="section-card workday-card" data-card-id="workday" draggable="true" aria-labelledby="workdaySectionTitle">
+          <h2 class="section-title" id="workdaySectionTitle">下班倒计时</h2>
     <div class="count">
       <div class="count-text" id="countLabel">还剩 0 个10分钟</div>
-      <div class="dots" id="dotsContainer" aria-label="剩余份数圆点"></div>
+      <div class="dots" id="dotsContainer" role="img" aria-label="剩余份数圆点"></div>
     </div>
     <div class="controls">
       <label for="unitInput">每份分钟数</label>
@@ -961,12 +1010,11 @@
     </div>
     <p class="status" id="statusLabel">上午按 12:00 计算，下午按 18:00 计算</p>
     <p class="clock" id="clockLabel">当前时间：--:--:--</p>
-    <div>
-      <label for="birthInput" class="eyebrow">出生日期</label>
-      <input id="birthInput" type="date" class="birth-input">
-    </div>
-    <div class="zone-section">
+        </section>
+        <section class="section-card zone-card" data-card-id="zones" draggable="true" aria-labelledby="zoneSectionTitle">
+          <h2 class="section-title" id="zoneSectionTitle">时间块分区</h2>
       <div class="zone-header">
+        <label for="zoneNameInput" class="sr-only">区域名称</label>
         <input id="zoneNameInput" type="text" placeholder="区域名称">
         <button class="add-zone-btn" id="addZoneBtn">添加区域</button>
       </div>
@@ -975,21 +1023,17 @@
         <p class="unassigned-label">未分配时间块</p>
         <div class="unassigned-dots-container" id="unassignedDotsContainer"></div>
       </div>
-    </div>
-    <div class="data-section">
-      <div class="countdown-days-header">
-        <input id="countdownNameInput" type="text" placeholder="名称">
-        <input id="countdownDateInput" type="date">
-        <button class="add-countdown-btn" id="addCountdownBtn">添加</button>
-      </div>
+        </section>
+        <section class="section-card data-card" data-card-id="data" draggable="true" aria-labelledby="dataSectionTitle">
+          <h2 class="section-title" id="dataSectionTitle">数据同步</h2>
       <div class="data-buttons">
         <button class="data-btn" id="exportBtn">导出数据</button>
         <button class="data-btn google-drive-btn" id="exportGDriveBtn">导出到Google Drive</button>
         <button class="data-btn import-btn" id="importBtn">导入数据</button>
         <button class="data-btn google-drive-btn" id="importGDriveBtn">从Google Drive导入</button>
-        <input type="file" id="importInput" class="import-input" accept=".json">
+        <input type="file" id="importInput" class="import-input" accept=".json" aria-label="导入数据文件">
       </div>
-    </div>
+        </section>
   </main>
 
   <script>
@@ -998,11 +1042,15 @@
     const BIRTH_STORAGE_KEY = "countdown-birthdate";
     const ZONES_STORAGE_KEY = "countdown-zones";
     const COUNTDOWNS_STORAGE_KEY = "countdown-days";
+    const CARD_ORDER_STORAGE_KEY = "workday-dashboard-card-order";
+    const DEFAULT_CARD_ORDER = ["countdown", "personal", "today", "workday", "zones", "data"];
 
     let zones = [];
     let countdowns = [];
     let draggedDot = null;
     let draggedFromZone = null;
+    let draggedCard = null;
+    let lastRenderedTimeBlockState = "";
 
     function getPreferredTheme() {
       const systemPrefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
@@ -1018,13 +1066,109 @@
       const isDark = normalizedTheme === "dark";
       document.documentElement.dataset.theme = normalizedTheme;
       const themeToggle = document.getElementById("themeToggle");
+      const label = isDark ? "切换到亮色" : "切换到暗色";
       themeToggle.setAttribute("aria-pressed", String(isDark));
-      themeToggle.textContent = isDark ? "亮色" : "暗色";
-      themeToggle.setAttribute("aria-label", isDark ? "切换亮色模式" : "切换暗黑模式");
+      themeToggle.textContent = label;
+      themeToggle.setAttribute("aria-label", label);
     }
 
     function saveTheme(theme) {
       window.localStorage.setItem(THEME_STORAGE_KEY, theme);
+    }
+
+    function normalizeCardOrder(order) {
+      const seen = new Set();
+      const normalized = [];
+      if (Array.isArray(order)) {
+        order.forEach(function (cardId) {
+          if (DEFAULT_CARD_ORDER.includes(cardId) && !seen.has(cardId)) {
+            seen.add(cardId);
+            normalized.push(cardId);
+          }
+        });
+      }
+      DEFAULT_CARD_ORDER.forEach(function (cardId) {
+        if (!seen.has(cardId)) {
+          normalized.push(cardId);
+        }
+      });
+      return normalized;
+    }
+
+    function loadCardOrder() {
+      const storedValue = window.localStorage.getItem(CARD_ORDER_STORAGE_KEY);
+      if (!storedValue) {
+        return DEFAULT_CARD_ORDER.slice();
+      }
+      try {
+        return normalizeCardOrder(JSON.parse(storedValue));
+      } catch (e) {
+        return DEFAULT_CARD_ORDER.slice();
+      }
+    }
+
+    function saveCardOrder(order) {
+      window.localStorage.setItem(CARD_ORDER_STORAGE_KEY, JSON.stringify(normalizeCardOrder(order)));
+    }
+
+    function getCurrentCardOrder() {
+      return Array.from(document.querySelectorAll(".section-card")).map(function (card) {
+        return card.dataset.cardId;
+      });
+    }
+
+    function applyCardOrder(order) {
+      const shell = document.querySelector(".dashboard-shell");
+      normalizeCardOrder(order).forEach(function (cardId) {
+        const card = shell.querySelector('[data-card-id="' + cardId + '"]');
+        if (card) {
+          shell.appendChild(card);
+        }
+      });
+    }
+
+    function bindCardDragging() {
+      const shell = document.querySelector(".dashboard-shell");
+      shell.querySelectorAll(".section-card").forEach(function (card) {
+        card.addEventListener("dragstart", function (e) {
+          draggedCard = card;
+          card.classList.add("dragging-card");
+          e.dataTransfer.effectAllowed = "move";
+        });
+        card.addEventListener("dragend", function () {
+          card.classList.remove("dragging-card");
+          shell.querySelectorAll(".section-card").forEach(function (item) {
+            item.classList.remove("drag-over-card");
+          });
+          draggedCard = null;
+        });
+        card.addEventListener("dragover", function (e) {
+          e.preventDefault();
+          if (card !== draggedCard) {
+            card.classList.add("drag-over-card");
+          }
+        });
+        card.addEventListener("dragleave", function () {
+          card.classList.remove("drag-over-card");
+        });
+        card.addEventListener("drop", function (e) {
+          e.preventDefault();
+          card.classList.remove("drag-over-card");
+          if (!draggedCard || draggedCard === card) {
+            return;
+          }
+
+          const cards = Array.from(shell.querySelectorAll(".section-card"));
+          const fromIndex = cards.indexOf(draggedCard);
+          const toIndex = cards.indexOf(card);
+          if (fromIndex < toIndex) {
+            card.after(draggedCard);
+          } else {
+            card.before(draggedCard);
+          }
+          saveCardOrder(getCurrentCardOrder());
+        });
+      });
     }
 
     function toggleTheme() {
@@ -1224,14 +1368,13 @@
       }
       zones.push({ name: name.trim(), dots: [] });
       saveZones();
-      renderZones();
+      updateTimeBlockViewsIfNeeded(true);
     }
 
     function deleteZone(index) {
-      const removedDots = zones[index].dots;
       zones.splice(index, 1);
       saveZones();
-      renderZones();
+      updateTimeBlockViewsIfNeeded(true);
     }
 
     function renderZones() {
@@ -1314,6 +1457,9 @@
       e.preventDefault();
       const targetZone = e.currentTarget;
       targetZone.classList.remove("drag-over");
+      if (!draggedDot) {
+        return;
+      }
 
       const targetZoneIndex = parseInt(targetZone.dataset.zoneIndex, 10);
       const dotId = draggedDot.dataset.dotId;
@@ -1325,17 +1471,12 @@
 
       zones[targetZoneIndex].dots.push(dotId);
       saveZones();
-      renderZones();
-      renderUnassignedDots();
+      updateTimeBlockViewsIfNeeded(true);
     }
 
-    function renderUnassignedDots() {
-      const container = document.getElementById("unassignedDotsContainer");
+    function bindUnassignedDropZone() {
       const unassignedSection = document.getElementById("unassignedDots");
-      const unitMinutes = getUnitMinutes();
-      const targetInfo = getDayTarget(new Date());
 
-      // Add drag event listeners to unassigned section
       unassignedSection.addEventListener("dragover", function(e) {
         e.preventDefault();
         unassignedSection.classList.add("drag-over");
@@ -1350,17 +1491,21 @@
         if (draggedDot) {
           const dotId = draggedDot.dataset.dotId;
           
-          // Remove from zone if it was in one
           if (draggedFromZone !== undefined && draggedFromZone !== null) {
             const fromZoneIndex = parseInt(draggedFromZone, 10);
             zones[fromZoneIndex].dots = zones[fromZoneIndex].dots.filter(id => id !== dotId);
           }
           
           saveZones();
-          renderZones();
-          renderUnassignedDots();
+          updateTimeBlockViewsIfNeeded(true);
         }
       });
+    }
+
+    function renderUnassignedDots() {
+      const container = document.getElementById("unassignedDotsContainer");
+      const unitMinutes = getUnitMinutes();
+      const targetInfo = getDayTarget(new Date());
 
       if (!unitMinutes || !targetInfo.target) {
         container.replaceChildren();
@@ -1406,6 +1551,40 @@
         dot.setAttribute("aria-hidden", "true");
         dotsContainer.appendChild(dot);
       }
+    }
+
+    function updateTimeBlockViewsIfNeeded(force) {
+      const unitMinutes = getUnitMinutes();
+      const targetInfo = getDayTarget(new Date());
+      if (!unitMinutes || !targetInfo.target) {
+        const emptyState = "empty";
+        if (force || lastRenderedTimeBlockState !== emptyState) {
+          renderDots(0);
+          renderUnassignedDots();
+          renderZones();
+          lastRenderedTimeBlockState = emptyState;
+        }
+        return;
+      }
+
+      const now = new Date();
+      const minutesLeft = Math.max(0, Math.floor((targetInfo.target - now) / 60000));
+      const totalDots = Math.floor(minutesLeft / unitMinutes);
+      const nextState = [
+        unitMinutes,
+        targetInfo.target.getTime(),
+        totalDots,
+        JSON.stringify(zones)
+      ].join("|");
+
+      if (!force && lastRenderedTimeBlockState === nextState) {
+        return;
+      }
+
+      renderDots(totalDots);
+      renderUnassignedDots();
+      renderZones();
+      lastRenderedTimeBlockState = nextState;
     }
 
     function formatBlocks(blocks) {
@@ -1637,14 +1816,14 @@
       if (!unitMinutes) {
         countLabel.textContent = "请输入大于0的分钟数";
         statusLabel.textContent = "输入框改成 10、25 这类正整数后会立刻生效";
-        renderDots(0);
+        updateTimeBlockViewsIfNeeded(false);
         return;
       }
 
       if (!targetInfo.target) {
         countLabel.textContent = "已经下班了";
         statusLabel.textContent = targetInfo.detail + "，当前按每份 " + unitMinutes + " 分钟显示";
-        renderDots(0);
+        updateTimeBlockViewsIfNeeded(false);
         return;
       }
 
@@ -1652,13 +1831,13 @@
       const blocks = minutesLeft / unitMinutes;
       countLabel.textContent = "离下班还剩 " + formatBlocks(blocks) + " 个" + unitMinutes + "分钟";
       statusLabel.textContent = targetInfo.detail + "，剩余总分钟数约为 " + minutesLeft + " 分钟";
-      renderDots(Math.floor(blocks));
-      renderUnassignedDots();
-      renderZones();
+      updateTimeBlockViewsIfNeeded(false);
     }
 
     applyTheme(getPreferredTheme());
     document.getElementById("themeToggle").addEventListener("click", toggleTheme);
+    applyCardOrder(loadCardOrder());
+    bindCardDragging();
     buildClockTicks();
     document.getElementById("unitInput").value = String(loadStoredUnitMinutes());
     // Load and set birth date if available
@@ -1666,9 +1845,9 @@
     if (storedBirth) {
       document.getElementById("birthInput").valueAsDate = storedBirth;
     }
+    bindUnassignedDropZone();
     // Load zones
     zones = loadZones();
-    renderZones();
     // Load countdowns
     countdowns = loadCountdowns();
     renderCountdowns();
@@ -1721,6 +1900,7 @@
         birthDate: window.localStorage.getItem(BIRTH_STORAGE_KEY),
         zones: zones,
         countdowns: countdowns,
+        cardOrder: getCurrentCardOrder(),
         exportTime: new Date().toISOString()
       };
       const jsonStr = JSON.stringify(data, null, 2);
@@ -1756,6 +1936,10 @@
           countdowns = data.countdowns;
           saveCountdowns();
           renderCountdowns();
+        }
+        if (Array.isArray(data.cardOrder)) {
+          saveCardOrder(data.cardOrder);
+          applyCardOrder(data.cardOrder);
         }
         updateView();
         alert("导入成功！");
@@ -1845,6 +2029,7 @@
         birthDate: window.localStorage.getItem(BIRTH_STORAGE_KEY),
         zones: zones,
         countdowns: countdowns,
+        cardOrder: getCurrentCardOrder(),
         exportTime: new Date().toISOString()
       };
       const jsonStr = JSON.stringify(data, null, 2);
@@ -1950,28 +2135,50 @@
       const modal = document.createElement("div");
       modal.className = "gdrive-modal";
 
-      let fileListHTML = '<div style="text-align:left;max-height:300px;overflow-y:auto;margin-bottom:12px;">';
+      const title = document.createElement("h3");
+      title.textContent = "选择要导入的文件";
+
+      const fileList = document.createElement("div");
+      fileList.className = "gdrive-file-list";
+
       files.forEach(function (f) {
         const date = new Date(f.createdTime).toLocaleString("zh-CN");
-        fileListHTML += '<div class="gdrive-file-item" data-file-id="' + f.id + '" style="padding:8px;border:1px solid rgba(119,95,75,0.15);border-radius:8px;margin-bottom:6px;cursor:pointer;transition:background 0.2s;">' +
-          '<div style="font-size:13px;font-weight:600;color:var(--text);">' + f.name + '</div>' +
-          '<div style="font-size:11px;color:var(--muted);margin-top:2px;">' + date + '</div>' +
-          '</div>';
-      });
-      fileListHTML += '</div>';
 
-      modal.innerHTML = `
-        <h3>选择要导入的文件</h3>
-        ${fileListHTML}
-        <div class="gdrive-modal-buttons">
-          <button class="gdrive-modal-btn cancel-btn" id="gdriveCancelBtn">取消</button>
-        </div>
-      `;
+        const item = document.createElement("div");
+        item.className = "gdrive-file-item";
+        item.dataset.fileId = f.id;
+
+        const nameEl = document.createElement("div");
+        nameEl.className = "gdrive-file-name";
+        nameEl.textContent = f.name;
+
+        const dateEl = document.createElement("div");
+        dateEl.className = "gdrive-file-date";
+        dateEl.textContent = date;
+
+        item.appendChild(nameEl);
+        item.appendChild(dateEl);
+        fileList.appendChild(item);
+      });
+
+      const buttonRow = document.createElement("div");
+      buttonRow.className = "gdrive-modal-buttons";
+
+      const cancelBtn = document.createElement("button");
+      cancelBtn.className = "gdrive-modal-btn cancel-btn";
+      cancelBtn.id = "gdriveCancelBtn";
+      cancelBtn.type = "button";
+      cancelBtn.textContent = "取消";
+
+      buttonRow.appendChild(cancelBtn);
+      modal.appendChild(title);
+      modal.appendChild(fileList);
+      modal.appendChild(buttonRow);
 
       overlay.appendChild(modal);
       document.body.appendChild(overlay);
 
-      document.getElementById("gdriveCancelBtn").addEventListener("click", function () {
+      cancelBtn.addEventListener("click", function () {
         document.body.removeChild(overlay);
       });
 
@@ -1986,12 +2193,6 @@
           const fileId = this.dataset.fileId;
           document.body.removeChild(overlay);
           downloadFileFromDrive(accessToken, fileId);
-        });
-        item.addEventListener("mouseenter", function () {
-          this.style.background = "rgba(214,106,42,0.08)";
-        });
-        item.addEventListener("mouseleave", function () {
-          this.style.background = "transparent";
         });
       });
     }
