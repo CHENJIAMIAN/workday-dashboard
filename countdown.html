@@ -714,6 +714,17 @@
       gap: 8px;
       font-size: 16px;
       color: var(--muted);
+      cursor: grab;
+    }
+
+    .countdown-item.dragging {
+      opacity: 0.55;
+      cursor: grabbing;
+    }
+
+    .countdown-item.drag-over {
+      outline: 2px dashed var(--accent);
+      outline-offset: 3px;
     }
 
     .countdown-item-name {
@@ -1050,6 +1061,7 @@
     let draggedDot = null;
     let draggedFromZone = null;
     let draggedCard = null;
+    let draggedCountdownIndex = null;
     let lastRenderedTimeBlockState = "";
 
     function getPreferredTheme() {
@@ -1646,6 +1658,55 @@
       renderCountdowns();
     }
 
+    function moveCountdown(fromIndex, toIndex) {
+      if (fromIndex === toIndex || fromIndex < 0 || toIndex < 0) {
+        return;
+      }
+      if (fromIndex >= countdowns.length || toIndex >= countdowns.length) {
+        return;
+      }
+
+      const movedItems = countdowns.splice(fromIndex, 1);
+      countdowns.splice(toIndex, 0, movedItems[0]);
+      saveCountdowns();
+      renderCountdowns();
+    }
+
+    function handleCountdownDragStart(e) {
+      draggedCountdownIndex = Number(e.currentTarget.dataset.countdownIndex);
+      e.currentTarget.classList.add("dragging");
+      e.dataTransfer.effectAllowed = "move";
+      e.dataTransfer.setData("text/plain", String(draggedCountdownIndex));
+    }
+
+    function handleCountdownDragEnd(e) {
+      e.currentTarget.classList.remove("dragging");
+      document.querySelectorAll(".countdown-item").forEach(function (item) {
+        item.classList.remove("drag-over");
+      });
+      draggedCountdownIndex = null;
+    }
+
+    function handleCountdownDragOver(e) {
+      e.preventDefault();
+      if (draggedCountdownIndex === null) {
+        return;
+      }
+      e.dataTransfer.dropEffect = "move";
+      e.currentTarget.classList.add("drag-over");
+    }
+
+    function handleCountdownDragLeave(e) {
+      e.currentTarget.classList.remove("drag-over");
+    }
+
+    function handleCountdownDrop(e) {
+      e.preventDefault();
+      e.currentTarget.classList.remove("drag-over");
+      const targetIndex = Number(e.currentTarget.dataset.countdownIndex);
+      moveCountdown(draggedCountdownIndex, targetIndex);
+    }
+
     function startEditCountdown(index) {
       renderCountdowns(index);
     }
@@ -1722,6 +1783,13 @@
 
         const itemEl = document.createElement("div");
         itemEl.className = "countdown-item";
+        itemEl.draggable = true;
+        itemEl.dataset.countdownIndex = String(index);
+        itemEl.addEventListener("dragstart", handleCountdownDragStart);
+        itemEl.addEventListener("dragend", handleCountdownDragEnd);
+        itemEl.addEventListener("dragover", handleCountdownDragOver);
+        itemEl.addEventListener("dragleave", handleCountdownDragLeave);
+        itemEl.addEventListener("drop", handleCountdownDrop);
 
         const nameEl = document.createElement("div");
         nameEl.className = "countdown-item-name";

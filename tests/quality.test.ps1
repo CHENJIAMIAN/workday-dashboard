@@ -43,6 +43,10 @@ $checks = @(
     Pattern = 'cardOrder: getCurrentCardOrder\(\)[\s\S]*if \(Array\.isArray\(data\.cardOrder\)\)[\s\S]*saveCardOrder\(data\.cardOrder\)'
   },
   @{
+    Name = "supports persisted drag sorting for countdown items"
+    Pattern = 'let draggedCountdownIndex = null;[\s\S]*function moveCountdown\(fromIndex, toIndex\)[\s\S]*saveCountdowns\(\);[\s\S]*function handleCountdownDrop\(e\)[\s\S]*moveCountdown\(draggedCountdownIndex, targetIndex\)[\s\S]*itemEl\.draggable = true'
+  },
+  @{
     Name = "shows 35 and 45 age milestones with equivalent dates inline"
     Pattern = 'id="yearsLeft35Label"[\s\S]*距离35岁还剩 --年（相当于 --年--月--日）[\s\S]*id="yearsLeft45Label"[\s\S]*距离45岁还剩 --年（相当于 --年--月--日）[\s\S]*function formatYearsLeftLabel\(targetAge, birthDate, now\)'
   },
