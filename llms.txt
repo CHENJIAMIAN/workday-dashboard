@@ -1,6 +1,6 @@
-# Workday Dashboard
+# WorkDay
 
-一个静态的下班倒计时和个人时间块看板。
+一个下班倒计时、剩余时间块规划和长期事项管理应用。
 
 主要页面：
-- [下班倒计时](./countdown.html)
+- [WorkDay](./)
