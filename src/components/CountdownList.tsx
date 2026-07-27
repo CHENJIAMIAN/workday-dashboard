@@ -2,7 +2,23 @@ import type { CountdownView } from './types';
 
 interface CountdownListProps { items: CountdownView[]; onEdit: (item: CountdownView) => void; onDelete: (id: string) => void; }
 
+function CountdownDuration({ daysLeft }: { daysLeft: number }) {
+  if (daysLeft === 0) return <strong>就是今天!</strong>;
+
+  const absoluteDays = Math.abs(daysLeft);
+  const years = Math.floor(absoluteDays / 365);
+  const remainingDays = years > 0 ? absoluteDays % 365 : absoluteDays;
+
+  return (
+    <strong>
+      <small>{daysLeft > 0 ? '还剩 ' : '已过 '}</small>
+      {years > 0 && <>{years}<small>年</small></>}
+      {remainingDays}<small>{years > 0 ? '天' : ' 天'}</small>
+    </strong>
+  );
+}
+
 export function CountdownList({ items, onEdit, onDelete }: CountdownListProps) {
   if (!items.length) return <div className="empty-state"><h3>还没有长期计划</h3><p>新建一个值得期待的日期。</p></div>;
-  return <div className="countdown-grid">{items.map((item) => <article className="countdown-card" key={item.id}><p className="eyebrow">{item.targetDate}</p><h3>{item.title}</h3><strong>{item.daysLeft >= 0 ? item.daysLeft : Math.abs(item.daysLeft)}<small> 天{item.daysLeft < 0 ? '前' : ''}</small></strong>{item.note && <p>{item.note}</p>}<div className="row-actions"><button type="button" onClick={() => onEdit(item)}>编辑</button><button type="button" className="danger-link" onClick={() => onDelete(item.id)}>删除</button></div></article>)}</div>;
+  return <div className="countdown-grid">{items.map((item) => <article className="countdown-card" key={item.id}><p className="eyebrow">{item.targetDate}</p><h3>{item.title}</h3><CountdownDuration daysLeft={item.daysLeft} />{item.note && <p>{item.note}</p>}<div className="row-actions"><button type="button" onClick={() => onEdit(item)}>编辑</button><button type="button" className="danger-link" onClick={() => onDelete(item.id)}>删除</button></div></article>)}</div>;
 }
