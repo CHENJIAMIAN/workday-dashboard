@@ -1,5 +1,12 @@
 # WorkDay
 
+<!-- codex-github-rules:bilingual-summary -->
+> **中文简介**：工作日数据看板
+
+> **English summary**: A workday data dashboard
+
+---
+
 WorkDay 是一个面向办公室与知识工作者的工作日时间看板。默认首页聚焦下班倒计时和剩余时间分配，长期计划、时间洞察与数据设置通过独立页面或抽屉进入。
 
 ## 功能
