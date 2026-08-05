@@ -1,4 +1,6 @@
-# WorkDay
+[English](./README.en.md)
+
+# WorkDay 工作日看板
 
 <!-- codex-github-rules:bilingual-summary -->
 > **中文简介**：工作日数据看板
