@@ -6,6 +6,7 @@ export const backupEnvelopeSchema = z.object({
   birthDate: z.unknown().optional(),
   zones: z.unknown().optional(),
   countdowns: z.unknown().optional(),
+  milestones: z.unknown().optional(),
   cardOrder: z.unknown().optional(),
   exportTime: z.unknown().optional(),
 }).passthrough();

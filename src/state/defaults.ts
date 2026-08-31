@@ -9,6 +9,7 @@ export function createDefaultState(): WorkdayState {
     birthDate: null,
     zones: [],
     countdowns: [],
+    milestones: [],
     cardOrder: [...DEFAULT_CARD_ORDER],
     exportTime: null,
   };

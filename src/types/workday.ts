@@ -14,12 +14,20 @@ export interface Countdown {
   note?: string;
 }
 
+export interface Milestone {
+  id: string;
+  name: string;
+  date?: string;
+  note?: string;
+}
+
 export interface WorkdayState {
   schemaVersion: typeof CURRENT_SCHEMA_VERSION;
   unitMinutes: number;
   birthDate: string | null;
   zones: Zone[];
   countdowns: Countdown[];
+  milestones: Milestone[];
   cardOrder: string[];
   exportTime: string | null;
 }

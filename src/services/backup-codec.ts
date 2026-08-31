@@ -1,7 +1,7 @@
 import { createDefaultState } from '../state/defaults';
 import { backupEnvelopeSchema } from '../schemas/backup-schema';
 import { migrateBackup } from '../schemas/migrations';
-import { CURRENT_SCHEMA_VERSION, type BackupDecodeResult, type Countdown, type WorkdayState, type Zone } from '../types/workday';
+import { CURRENT_SCHEMA_VERSION, type BackupDecodeResult, type Countdown, type Milestone, type WorkdayState, type Zone } from '../types/workday';
 
 function text(value: unknown): string | null {
   return typeof value === 'string' && value.trim() ? value.trim() : null;
@@ -36,6 +36,16 @@ function decodeCountdown(value: unknown, index: number): Countdown | null {
   return { id: text(item.id) ?? makeId('countdown', index), name, date, ...(note ? { note } : {}) };
 }
 
+function decodeMilestone(value: unknown, index: number): Milestone | null {
+  if (!value || typeof value !== 'object') return null;
+  const item = value as Record<string, unknown>;
+  const name = text(item.name) ?? text(item.title);
+  if (!name) return null;
+  const rawDate = item.date == null || item.date === '' ? null : validDate(item.date);
+  const note = text(item.note) ?? undefined;
+  return { id: text(item.id) ?? makeId('milestone', index), name, ...(rawDate ? { date: rawDate } : {}), ...(note ? { note } : {}) };
+}
+
 export function decodeBackup(input: string | unknown): BackupDecodeResult {
   let raw: unknown = input;
   if (typeof input === 'string') {
@@ -59,6 +69,10 @@ export function decodeBackup(input: string | unknown): BackupDecodeResult {
   const countdowns = countdownInput.map(decodeCountdown).filter((item): item is Countdown => item !== null);
   if (countdowns.length !== countdownInput.length) warnings.push('已跳过无效倒计时');
 
+  const milestoneInput = Array.isArray(source.milestones) ? source.milestones : [];
+  const milestones = milestoneInput.map(decodeMilestone).filter((item): item is Milestone => item !== null);
+  if (milestones.length !== milestoneInput.length) warnings.push('已跳过无效里程碑');
+
   const birthDate = source.birthDate == null ? null : validDate(source.birthDate);
   if (source.birthDate != null && !birthDate) warnings.push('birthDate 无效，已清空');
   const exportTime = source.exportTime == null ? null : validDate(source.exportTime);
@@ -66,7 +80,7 @@ export function decodeBackup(input: string | unknown): BackupDecodeResult {
     ? [...new Set(source.cardOrder.filter((item): item is string => typeof item === 'string' && item.trim().length > 0))]
     : defaults.cardOrder;
 
-  const state: WorkdayState = { schemaVersion: CURRENT_SCHEMA_VERSION, unitMinutes, birthDate, zones, countdowns, cardOrder, exportTime };
+  const state: WorkdayState = { schemaVersion: CURRENT_SCHEMA_VERSION, unitMinutes, birthDate, zones, countdowns, milestones, cardOrder, exportTime };
   return { state, warnings, migrated: legacy || parsed.data.schemaVersion !== CURRENT_SCHEMA_VERSION };
 }
 

@@ -1,4 +1,4 @@
-[中文](./README.md)
+﻿[中文](./README.md)
 
 # WorkDay
 
@@ -9,26 +9,28 @@ WorkDay is a workday time dashboard for office and knowledge workers. Its defaul
 - Live end-of-work countdown and workday progress
 - Remaining-time blocks split by configurable durations
 - Time-zone creation, editing, and block allocation
-- Long-term item countdown management
+- Long-term item countdown management (list view)
+- Editable life milestone timeline (e.g., graduation, marriage, age 30)
 - Annual progress and plan-count insights
 - Light and dark themes
 - Local JSON and Google Drive backups
 - Compatibility with legacy WorkDay JSON and scattered localStorage data
+- Tabs switch on hover; Plans page is the default home
 
 ## Local Development
 
-~~~powershell
+```powershell
 npm install
 npm run dev
-~~~
+```
 
 ## Verification
 
-~~~powershell
+```powershell
 npm run typecheck
 npm test
 npm run build
-~~~
+```
 
 ## Stack
 

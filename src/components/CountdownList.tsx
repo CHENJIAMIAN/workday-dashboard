@@ -20,5 +20,5 @@ function CountdownDuration({ daysLeft }: { daysLeft: number }) {
 
 export function CountdownList({ items, onEdit, onDelete }: CountdownListProps) {
   if (!items.length) return <div className="empty-state"><h3>还没有长期计划</h3><p>新建一个值得期待的日期。</p></div>;
-  return <div className="countdown-grid">{items.map((item) => <article className="countdown-card" key={item.id}><p className="eyebrow">{item.targetDate}</p><h3>{item.title}</h3><CountdownDuration daysLeft={item.daysLeft} />{item.note && <p>{item.note}</p>}<div className="row-actions"><button type="button" onClick={() => onEdit(item)}>编辑</button><button type="button" className="danger-link" onClick={() => onDelete(item.id)}>删除</button></div></article>)}</div>;
+  return <div className="item-list">{items.map((item) => <article className="list-item" key={item.id}><div><h3>{item.title}</h3><p className="eyebrow">{item.targetDate}{item.note ? ` · ${item.note}` : ''}</p></div><CountdownDuration daysLeft={item.daysLeft} /><div className="row-actions"><button type="button" onClick={() => onEdit(item)}>编辑</button><button type="button" className="danger-link" onClick={() => onDelete(item.id)}>删除</button></div></article>)}</div>;
 }

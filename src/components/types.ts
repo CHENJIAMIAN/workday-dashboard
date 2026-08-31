@@ -15,6 +15,13 @@ export interface CountdownView {
   note?: string;
 }
 
+export interface MilestoneView {
+  id: string;
+  title: string;
+  date?: string;
+  note?: string;
+}
+
 export interface ClockView {
   label: string;
   value: string;

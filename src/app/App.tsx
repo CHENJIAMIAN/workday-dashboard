@@ -1,10 +1,11 @@
 import { createContext, useContext, useEffect, useMemo, useState } from 'react'
-import type { CountdownView, InsightView, TimeZoneView } from '../components/types'
+import type { CountdownView, InsightView, MilestoneView, TimeZoneView } from '../components/types'
 import { SettingsDrawer } from '../components/SettingsDrawer'
 import { CountdownEditor } from '../modals/CountdownEditor'
 import { GoogleDriveDialog } from '../modals/GoogleDriveDialog'
 import { ImportDialog } from '../modals/ImportDialog'
 import { ZoneEditor } from '../modals/ZoneEditor'
+import { MilestoneEditor } from '../modals/MilestoneEditor'
 import type { PlansPageProps } from '../pages/PlansPage'
 import type { TodayPageProps } from '../pages/TodayPage'
 import { decodeBackup, encodeBackup } from '../services/backup-codec'
@@ -69,6 +70,8 @@ export function App() {
   const [driveClientId, setDriveClientId] = useState(() => localStorage.getItem(DRIVE_CLIENT_ID_KEY) ?? '')
   const [editingCountdown, setEditingCountdown] = useState<CountdownView>()
   const [countdownEditorOpen, setCountdownEditorOpen] = useState(false)
+  const [editingMilestone, setEditingMilestone] = useState<MilestoneView>()
+  const [milestoneEditorOpen, setMilestoneEditorOpen] = useState(false)
   const [editingZone, setEditingZone] = useState<TimeZoneView>()
   const [zoneEditorOpen, setZoneEditorOpen] = useState(false)
   const [selectedZoneId, setSelectedZoneId] = useState<string>()
@@ -96,6 +99,12 @@ export function App() {
     daysLeft: daysLeft(item.date.slice(0, 10)),
     note: item.note,
   })), [state.countdowns])
+  const milestones = useMemo<MilestoneView[]>(() => state.milestones.map((item) => ({
+    id: item.id,
+    title: item.name,
+    date: item.date,
+    note: item.note,
+  })), [state.milestones])
   const clock = calculateWorkdayClock(now, { unitMinutes: state.unitMinutes })
   const assignedBlocks = zones.reduce((sum, zone) => sum + zone.blocks, 0)
 
@@ -151,6 +160,24 @@ export function App() {
           }],
     }))
     setCountdownEditorOpen(false)
+  }
+
+  function saveMilestone(item: { id?: string; title: string; date?: string; note: string }) {
+    if (!item.title.trim()) return
+    setState((current) => ({
+      ...current,
+      milestones: item.id
+        ? current.milestones.map((milestone) => milestone.id === item.id
+            ? { ...milestone, name: item.title.trim(), date: item.date || undefined, note: item.note.trim() || undefined }
+            : milestone)
+        : [...current.milestones, {
+            id: crypto.randomUUID(),
+            name: item.title.trim(),
+            date: item.date || undefined,
+            note: item.note.trim() || undefined,
+          }],
+    }))
+    setMilestoneEditorOpen(false)
   }
 
   function exportJson() {
@@ -257,10 +284,14 @@ export function App() {
     },
     plans: {
       countdowns,
+      milestones,
       zones,
       onAddCountdown: () => { setEditingCountdown(undefined); setCountdownEditorOpen(true) },
       onEditCountdown: (item) => { setEditingCountdown(item); setCountdownEditorOpen(true) },
       onDeleteCountdown: (id) => setState((current) => ({ ...current, countdowns: current.countdowns.filter((item) => item.id !== id) })),
+      onAddMilestone: () => { setEditingMilestone(undefined); setMilestoneEditorOpen(true) },
+      onEditMilestone: (item) => { setEditingMilestone(item); setMilestoneEditorOpen(true) },
+      onDeleteMilestone: (id) => setState((current) => ({ ...current, milestones: current.milestones.filter((item) => item.id !== id) })),
       onAddZone: () => openZoneEditor(),
       onEditZone: (zone) => openZoneEditor(zone),
       onDeleteZone: (id) => setState((current) => ({ ...current, zones: current.zones.filter((zone) => zone.id !== id) })),
@@ -282,6 +313,7 @@ export function App() {
         onOpenDrive={() => { setSettingsOpen(false); setDriveOpen(true) }}
       />
       <CountdownEditor open={countdownEditorOpen} value={editingCountdown} onClose={() => setCountdownEditorOpen(false)} onSave={saveCountdown} />
+      <MilestoneEditor open={milestoneEditorOpen} value={editingMilestone} onClose={() => setMilestoneEditorOpen(false)} onSave={saveMilestone} />
       <ZoneEditor open={zoneEditorOpen} value={editingZone} onClose={() => setZoneEditorOpen(false)} onSave={saveZone} />
       <ImportDialog open={importOpen} error={importError} onClose={() => setImportOpen(false)} onImport={importFile} />
       <GoogleDriveDialog

@@ -10,8 +10,8 @@ interface HeaderProps {
 }
 
 const pages = [
-  { id: 'today', label: '今日', icon: Timer },
   { id: 'plans', label: '计划', icon: CalendarDays },
+  { id: 'today', label: '今日', icon: Timer },
   { id: 'insights', label: '洞察', icon: BarChart3 },
 ] as const
 
@@ -23,7 +23,7 @@ export function Header({ page, onNavigate, onOpenSettings, darkMode, onToggleThe
       </button>
       <nav className="main-tabs" aria-label="主导航">
         {pages.map((item) => (
-          <button key={item.id} className={page === item.id ? 'is-active' : ''} type="button" onClick={() => onNavigate(item.id)}>
+          <button key={item.id} className={page === item.id ? 'is-active' : ''} type="button" onClick={() => onNavigate(item.id)} onMouseEnter={() => onNavigate(item.id)}>
             <item.icon aria-hidden="true" size={17} />
             <span>{item.label}</span>
           </button>
